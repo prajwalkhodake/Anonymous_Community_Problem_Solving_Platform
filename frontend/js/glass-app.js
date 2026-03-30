@@ -758,8 +758,152 @@ document.addEventListener('DOMContentLoaded', () => {
     case 'dashboard': initDashboard(); break;
     case 'community': initCommunity(); break;
     case 'profile': initProfile(); break;
+    case 'admin': initAdmin(); break;
   }
 });
+
+// ════════════════════════════════════════
+// PAGE 6: ADMIN
+// ════════════════════════════════════════
+function initAdmin() {
+  const loginSec = $('#adminLoginSection');
+  const dashSec = $('#adminDashboardSection');
+  const loginForm = $('#adminLoginForm');
+  const logoutBtn = $('#adminLogoutBtn');
+
+  // Hardcoded Admin Credentials
+  const ADMIN_ID = 'admin';
+  const ADMIN_PASS = 'admin123';
+
+  // Check login state
+  if (sessionStorage.getItem('admin_auth') === 'true') {
+    showDashboard();
+  }
+
+  if (loginForm) {
+    loginForm.onsubmit = (e) => {
+      e.preventDefault();
+      const id = $('#adminId').value.trim();
+      const pass = $('#adminPass').value.trim();
+      
+      if (id === ADMIN_ID && pass === ADMIN_PASS) {
+        sessionStorage.setItem('admin_auth', 'true');
+        toast('Admin access granted', 'success');
+        showDashboard();
+      } else {
+        toast('Invalid admin credentials', 'error');
+      }
+    };
+  }
+
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      sessionStorage.removeItem('admin_auth');
+      dashSec.style.display = 'none';
+      loginSec.style.display = 'flex';
+      toast('Admin logged out', 'info');
+    };
+  }
+
+  // Tabs
+  $$('.admin-tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      $$('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+      $$('.panel-section').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      $(`#${btn.dataset.target}`).classList.add('active');
+    };
+  });
+
+  function showDashboard() {
+    loginSec.style.display = 'none';
+    dashSec.style.display = 'block';
+    renderAdminData();
+  }
+
+  function renderAdminData() {
+    const users = LS.get('anon_users') || [];
+    let problems = LS.get('anon_problems') || [];
+
+    // Stats
+    let totalResp = 0;
+    problems.forEach(p => totalResp += (p.responses ? p.responses.length : 0));
+    
+    $('#adminStatUsers').textContent = users.length;
+    $('#adminStatPosts').textContent = problems.length;
+    $('#adminStatResponses').textContent = totalResp;
+
+    // Render Users
+    const utbody = $('#adminUsersTbody');
+    if (utbody) {
+      utbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.username || '<i>No identity yet</i>'}</td>
+          <td>${u.email}</td>
+          <td>${u.trustScore || 0}</td>
+          <td>
+            <button class="action-btn" onclick="window.deleteAdminUser(${u.id})">
+              <i class="fa-solid fa-trash"></i> Delete User
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Render Posts
+    const ptbody = $('#adminPostsTbody');
+    if (ptbody) {
+      ptbody.innerHTML = problems.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.authorName || 'Unknown'}</td>
+          <td>${p.title.length > 30 ? p.title.substring(0,30)+'...' : p.title}</td>
+          <td>${new Date(p.created).toLocaleDateString()}</td>
+          <td>
+            <button class="action-btn" onclick="window.deleteAdminPost(${p.id})">
+              <i class="fa-solid fa-trash"></i> Delete Post
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // Global Delete Functions for inline onclick
+  window.deleteAdminUser = (userId) => {
+    if(!confirm('Are you sure you want to delete this user? ALL THEIR POSTS WILL ALSO BE DELETED.')) return;
+    
+    let users = LS.get('anon_users') || [];
+    const userToDel = users.find(u => u.id === userId);
+    
+    if (userToDel) {
+      users = users.filter(u => u.id !== userId);
+      LS.set('anon_users', users);
+
+      let problems = LS.get('anon_problems') || [];
+      problems = problems.filter(p => !((p.authorId && p.authorId === userId) || (p.authorName && p.authorName === userToDel.username)));
+      
+      // Also remove their responses from other posts
+      problems.forEach(p => {
+        if(p.responses) p.responses = p.responses.filter(r => !((r.authorId && r.authorId === userId) || (r.authorName && r.authorName === userToDel.username)));
+      });
+
+      LS.set('anon_problems', problems);
+      toast('User & their posts deleted', 'success');
+      renderAdminData();
+    }
+  };
+
+  window.deleteAdminPost = (postId) => {
+    if(!confirm('Delete this post?')) return;
+    let problems = LS.get('anon_problems') || [];
+    problems = problems.filter(p => p.id !== postId);
+    LS.set('anon_problems', problems);
+    toast('Post deleted', 'success');
+    renderAdminData();
+  };
+}
 
 function initProfile() {
   const user = guardAuth(); if (!user) return;
