@@ -16,10 +16,10 @@ const LS = {
 function toast(msg, type = 'info') {
   let w = $('.toast-wrap');
   if (!w) { w = document.createElement('div'); w.className = 'toast-wrap'; document.body.appendChild(w); }
-  const icons = { success: '✅', error: '❌', info: '💡' };
+  const icons = { success: '<i class="fa-solid fa-check"></i>', error: '<i class="fa-solid fa-xmark"></i>', info: '<i class="fa-solid fa-lightbulb"></i>' };
   const el = document.createElement('div');
   el.className = `toast t-${type}`;
-  el.innerHTML = `<span>${icons[type] || '💡'}</span><span>${msg}</span>`;
+  el.innerHTML = `<span>${icons[type] || '<i class="fa-solid fa-lightbulb"></i>'}</span><span>${msg}</span>`;
   w.appendChild(el);
   setTimeout(() => {
     el.style.animation = 'toastOut 0.35s ease forwards';
@@ -178,8 +178,8 @@ function initCategoryDropdown() {
       // Update dropdown label
       const label = $('.cat-label');
       if (label) {
-        const emojiMap = { all: '🌐', urgent: '🔴', help: '🟡', discussion: '🔵', advice: '🟣', general: '⚪' };
-        label.textContent = `${emojiMap[filter] || '🌐'} ${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
+        const emojiMap = { all: '<i class="fa-solid fa-globe"></i>', urgent: '<span class="status-dot dot-red"></span>', help: '<span class="status-dot dot-yellow"></span>', discussion: '<span class="status-dot dot-blue"></span>', advice: '<span class="status-dot dot-purple"></span>', general: '<span class="status-dot dot-gray"></span>' };
+        label.innerHTML = `${emojiMap[filter] || '<i class="fa-solid fa-globe"></i>'} ${filter.charAt(0).toUpperCase() + filter.slice(1)}`;
       }
 
       // Close dropdown
@@ -261,7 +261,7 @@ function initAuth() {
     const found = users.find(u => u.email === email && u.password === pass);
     if (!found) return toast('Invalid credentials', 'error');
     LS.set('anon_user', found);
-    toast('Welcome back! 🎉', 'success');
+    toast('Welcome back! ', 'success');
     setTimeout(() => {
       window.location.href = LS.get('anon_username') ? 'community.html' : 'username.html';
     }, 700);
@@ -307,7 +307,7 @@ function initAuth() {
     users.push(nu);
     LS.set('anon_users', users);
     LS.set('anon_user', nu);
-    toast('Account created! 🚀', 'success');
+    toast('Account created! <i class="fa-solid fa-paper-plane"></i>', 'success');
     setTimeout(() => { window.location.href = 'username.html'; }, 700);
   }
 }
@@ -349,8 +349,19 @@ function initUsername() {
     const final = custom || cur;
     if (final.length < 3) return toast('Min 3 characters', 'error');
 
+    const users = LS.get('anon_users') || [];
+    const problems = LS.get('anon_problems') || [];
+    
+    // Check if username is already taken by another user
+    const isTakenInUsers = users.some(u => u.username && u.username.toLowerCase() === final.toLowerCase() && u.id !== LS.get('anon_user')?.id);
+    const isTakenInProblems = problems.some(p => (
+      (p.authorName && p.authorName.toLowerCase() === final.toLowerCase() && p.authorId !== LS.get('anon_user')?.id) ||
+      (p.responses && p.responses.some(r => r.authorName && r.authorName.toLowerCase() === final.toLowerCase() && r.authorId !== LS.get('anon_user')?.id))
+    ));
+    if (isTakenInUsers || isTakenInProblems) return toast('Username already taken', 'error');
+
     const authUser = LS.get('anon_user');
-    let msg = `Identity: ${final} 🎭`;
+    let msg = `Identity: ${final} <i class="fa-solid fa-user-secret"></i>`;
 
     if (authUser) {
       if (isChanging) {
@@ -360,7 +371,7 @@ function initUsername() {
         authUser.identity_changes = (authUser.identity_changes || 0) + 1;
         msg = `Identity changed to ${final} (${authUser.identity_changes}/3)`;
       }
-      const users = LS.get('anon_users') || [];
+      authUser.username = final;
       const uIndex = users.findIndex(u => u.id === authUser.id);
       if (uIndex !== -1) users[uIndex] = authUser;
       LS.set('anon_users', users);
@@ -489,7 +500,7 @@ function initModalComposer(user, uname) {
       const overlay = $('#composerModal');
       if (overlay) overlay.classList.remove('show');
 
-      toast('Posted anonymously 🎭', 'success');
+      toast('Posted anonymously <i class="fa-solid fa-user-secret"></i>', 'success');
       renderFeed();
     };
   }
@@ -510,8 +521,8 @@ function initFilters() {
       // Update label
       const label = $('.cat-label');
       if (label) {
-        const emojiMap = { all: '🌐', urgent: '🔴', help: '🟡', discussion: '🔵', advice: '🟣', general: '⚪' };
-        label.textContent = `${emojiMap[activeFilter] || '🌐'} ${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)}`;
+        const emojiMap = { all: '<i class="fa-solid fa-globe"></i>', urgent: '<span class="status-dot dot-red"></span>', help: '<span class="status-dot dot-yellow"></span>', discussion: '<span class="status-dot dot-blue"></span>', advice: '<span class="status-dot dot-purple"></span>', general: '<span class="status-dot dot-gray"></span>' };
+        label.innerHTML = `${emojiMap[activeFilter] || '<i class="fa-solid fa-globe"></i>'} ${activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)}`;
       }
 
       renderFeed();
@@ -541,7 +552,7 @@ function renderFeed() {
   if (activeFilter !== 'all') problems = problems.filter(p => p.tag === activeFilter);
 
   if (!problems.length) {
-    feed.innerHTML = `<div class="empty"><div class="empty-icon">🌌</div><h3>Nothing here yet</h3><p>Be the first to share anonymously.</p></div>`;
+    feed.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-moon"></i></div><h3>Nothing here yet</h3><p>Be the first to share anonymously.</p></div>`;
     return;
   }
 
@@ -564,7 +575,7 @@ function buildPost(p) {
       <div>
         <div class="resp-name">
           <a href="profile.html?user=${encodeURIComponent(r.authorName)}" class="user-link">${r.authorName}</a> 
-          <span class="trust-badge">💎 ${getUserTrustScore(r.authorName)}</span> <span>· ${timeAgo(r.created)}</span>
+          <span class="trust-badge"><i class="fa-regular fa-gem"></i> ${getUserTrustScore(r.authorName)}</span> <span>· ${timeAgo(r.created)}</span>
         </div>
         <div class="resp-text">${r.text}</div>
       </div>
@@ -580,7 +591,7 @@ function buildPost(p) {
           <div>
             <div class="post-name">
               <a href="profile.html?user=${encodeURIComponent(p.authorName)}" class="user-link">${p.authorName}</a> 
-              <span class="trust-badge">💎 ${getUserTrustScore(p.authorName)}</span>
+              <span class="trust-badge"><i class="fa-regular fa-gem"></i> ${getUserTrustScore(p.authorName)}</span>
             </div>
             <div class="post-time">${timeAgo(p.created)}</div>
           </div>
@@ -590,9 +601,9 @@ function buildPost(p) {
       <div class="post-title">${p.title}</div>
       <div class="post-body">${p.body}</div>
       <div class="post-actions">
-        <button class="act-btn like-btn ${liked?'liked':''}" data-id="${p.id}">${liked?'❤️':'🤍'} ${p.likes||0}</button>
-        <button class="act-btn reply-toggle" data-id="${p.id}">💬 ${p.responses?.length||0} replies</button>
-        <button class="act-btn share-btn">🔗 Share</button>
+        <button class="act-btn like-btn ${liked?'liked':''}" data-id="${p.id}">${liked?'<i class="fa-solid fa-heart" style="color: #ff4b4b;"></i>':'<i class="fa-regular fa-heart"></i>'} ${p.likes||0}</button>
+        <button class="act-btn reply-toggle" data-id="${p.id}"><i class="fa-solid fa-comment"></i> ${p.responses?.length||0} replies</button>
+        <button class="act-btn share-btn"><i class="fa-solid fa-link"></i> Share</button>
       </div>
       <div class="responses-wrap hidden" id="rw-${p.id}">
         ${resps}
@@ -638,7 +649,7 @@ function bindPostEvents() {
       if (!p.responses) p.responses = [];
       p.responses.push({ id: Date.now(), text, authorName: isAnon ? randomName() : uname, created: new Date().toISOString() });
       LS.set('anon_problems', all);
-      toast('Reply sent 💬', 'success');
+      toast('Reply sent <i class="fa-solid fa-comment"></i>', 'success');
       renderFeed();
     };
   });
@@ -730,18 +741,22 @@ function initProfile() {
   const profileName = document.querySelector('#profileName');
   const profileAvatar = document.querySelector('#profileAvatar');
   const profileTrustScore = document.querySelector('#profileTrustScore');
+  const profileEmail = document.querySelector('#profileEmail');
   const profileFeed = document.querySelector('#profileFeed');
-  const changeIdentityBtn = document.querySelector('#changeIdentityBtn');
+  const settingsCard = document.querySelector('.settings-card');
+  const userEmailDisplay = profileEmail ? profileEmail.parentElement : null;
   const dashHeroH1 = document.querySelector('.dash-hero h1');
   const dashHeroP = document.querySelector('.dash-hero p');
 
   if (!isMyProfile) {
     if (dashHeroH1) dashHeroH1.textContent = `${targetUser}'s Profile`;
     if (dashHeroP) dashHeroP.textContent = "Viewing community member";
-    if (changeIdentityBtn) changeIdentityBtn.style.display = 'none'; // Hide button on other people's profiles
+    if (settingsCard) settingsCard.style.display = 'none'; 
+    if (userEmailDisplay) userEmailDisplay.style.display = 'none';
   } else {
     if (dashHeroH1) dashHeroH1.textContent = "Your Profile";
-    if (dashHeroP) dashHeroP.textContent = "Manage your identity and posts";
+    if (dashHeroP) dashHeroP.textContent = "Manage your identity and account settings";
+    if (profileEmail) profileEmail.textContent = user.email || 'user@email.com';
   }
 
   if (profileName) profileName.textContent = targetUser;
@@ -759,17 +774,96 @@ function initProfile() {
   
   if (profileTrustScore) {
     const score = getUserTrustScore(targetUser);
-    profileTrustScore.textContent = `💎 ${score}`;
+    profileTrustScore.innerHTML = `<i class="fa-regular fa-gem"></i> ${score}`;
   }
 
-  if (changeIdentityBtn && isMyProfile) {
-    changeIdentityBtn.addEventListener('click', () => {
-      const cUser = LS.get('anon_user');
-      if (cUser && (cUser.identity_changes || 0) >= 3) {
-        return toast('Identity changes limit reached (3/3)', 'error');
-      }
-      window.location.href = 'username.html?change=1';
-    });
+  // Settings Actions
+  if (isMyProfile) {
+    const btnChangeId = document.querySelector('#settingChangeId');
+    const btnUpdateEmail = document.querySelector('#settingUpdateEmail');
+    const btnChangePass = document.querySelector('#settingChangePass');
+    const btnClearPosts = document.querySelector('#settingClearPosts');
+    const btnLogout = document.querySelector('#settingLogout');
+
+    if (btnChangeId) {
+      btnChangeId.addEventListener('click', () => {
+        const cUser = LS.get('anon_user');
+        if (cUser && (cUser.identity_changes || 0) >= 3) {
+          return toast('Identity changes limit reached (3/3)', 'error');
+        }
+        window.location.href = 'username.html?change=1';
+      });
+    }
+
+    if (btnUpdateEmail) {
+      btnUpdateEmail.addEventListener('click', () => {
+        const newEmail = prompt('Enter your new email address:', user.email);
+        if (newEmail && newEmail.trim() !== '') {
+          user.email = newEmail.trim();
+          LS.set('anon_user', user);
+          
+          // update user in anon_users list
+          const users = LS.get('anon_users') || [];
+          const uIndex = users.findIndex(u => u.id === user.id);
+          if (uIndex !== -1) {
+            users[uIndex] = user;
+            LS.set('anon_users', users);
+          }
+          
+          if (profileEmail) profileEmail.textContent = user.email;
+          populateDropdown();
+          toast('Email updated successfully ', 'success');
+        }
+      });
+    }
+
+    if (btnChangePass) {
+      btnChangePass.addEventListener('click', () => {
+        const newPass = prompt('Enter your new password:');
+        if (newPass && newPass.length >= 6) {
+          user.password = newPass;
+          LS.set('anon_user', user);
+          
+          // update user in anon_users list
+          const users = LS.get('anon_users') || [];
+          const uIndex = users.findIndex(u => u.id === user.id);
+          if (uIndex !== -1) {
+            users[uIndex] = user;
+            LS.set('anon_users', users);
+          }
+          toast('Password changed successfully <i class="fa-solid fa-lock"></i>', 'success');
+        } else if (newPass) {
+          toast('Password must be at least 6 characters', 'error');
+        }
+      });
+    }
+
+    if (btnClearPosts) {
+      btnClearPosts.addEventListener('click', () => {
+        if (confirm('Are you sure you want to clear all your posts? This cannot be undone.')) {
+          let problems = LS.get('anon_problems') || [];
+          const wasLen = problems.length;
+          problems = problems.filter(p => p.authorName !== targetUser);
+          
+          if (problems.length < wasLen) {
+             LS.set('anon_problems', problems);
+             toast('All your posts cleared <i class="fa-solid fa-trash"></i>', 'info');
+             setTimeout(() => location.reload(), 500);
+          } else {
+             toast('You have no posts to clear', 'info');
+          }
+        }
+      });
+    }
+
+    if (btnLogout) {
+      btnLogout.addEventListener('click', () => {
+        LS.del('anon_user');
+        LS.del('anon_username');
+        toast('Logged out', 'info');
+        setTimeout(() => window.location.href = 'index.html', 500);
+      });
+    }
   }
 
   if (profileFeed) {
@@ -777,7 +871,7 @@ function initProfile() {
     const mine = problems.filter(p => p.authorName === targetUser).sort((a,b) => new Date(b.created) - new Date(a.created));
     
     if (mine.length === 0) {
-      profileFeed.innerHTML = `<div class="empty"><div class="empty-icon">🌌</div><h3>No activity yet</h3><p>${isMyProfile ? "You haven't" : "This user hasn't"} posted anything.</p></div>`;
+      profileFeed.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-moon"></i></div><h3>No activity yet</h3><p>${isMyProfile ? "You haven't" : "This user hasn't"} posted anything.</p></div>`;
     } else {
       profileFeed.innerHTML = mine.map(p => buildPost(p)).join('');
       bindPostEvents();

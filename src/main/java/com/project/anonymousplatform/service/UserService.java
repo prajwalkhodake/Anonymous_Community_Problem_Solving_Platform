@@ -17,6 +17,9 @@ public class UserService {
     }
 
     public User createUser(String anonymousName) {
+        if (userRepository.findByAnonymousName(anonymousName).isPresent()) {
+            throw new IllegalArgumentException("Username is already taken");
+        }
         User user = new User();
         user.setAnonymousName(anonymousName);
         user.setTrustScore(0);

@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Anonymous · Dashboard</title>
+  <title>Anonymous &middot; Dashboard</title>
   <link rel="stylesheet" href="css/glass.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body data-page="dashboard">
 
@@ -18,32 +19,32 @@
   <nav class="nav">
     <div class="nav-inner">
       <a href="dashboard.html" class="nav-brand">
-        <div class="nav-brand-icon">🎭</div>
+        <div class="nav-brand-icon"><i class="fa-solid fa-user-secret"></i></div>
         <span>Anonymous</span>
       </a>
       <div class="nav-links">
-        <a href="dashboard.html" class="nav-link active">📊 <span>Dashboard</span></a>
-        <a href="community.html" class="nav-link">🏠 <span>Board</span></a>
+        <a href="dashboard.html" class="nav-link active"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></a>
+        <a href="community.html" class="nav-link"><i class="fa-solid fa-house"></i> <span>Board</span></a>
 
         <!-- Profile Dropdown -->
         <div class="dropdown">
           <button class="dropdown-trigger">
             <div class="trigger-avatar trigger-initial">U</div>
             <span class="trigger-name">User</span>
-            <span class="trigger-arrow">▼</span>
+            <span class="trigger-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em"></i></span>
           </button>
           <div class="dropdown-menu">
             <div class="dropdown-header">
               <div class="dh-name dd-username">User</div>
               <div class="dh-email dd-email">user@email.com</div>
-              <div class="dh-badge">🔒 Anonymous Mode</div>
+              <div class="dh-badge"><i class="fa-solid fa-lock"></i> Anonymous Mode</div>
             </div>
-            <button class="dropdown-item" data-action="dashboard"><div class="di-icon">📊</div> Dashboard</button>
-            <button class="dropdown-item" data-action="community"><div class="di-icon">🏠</div> Community Board</button>
-            <button class="dropdown-item" data-action="change-name"><div class="di-icon">🎭</div> Change Identity</button>
+            <button class="dropdown-item" data-action="dashboard"><div class="di-icon"><i class="fa-solid fa-chart-line"></i></div> Dashboard</button>
+            <button class="dropdown-item" data-action="community"><div class="di-icon"><i class="fa-solid fa-house"></i></div> Community Board</button>
+            <button class="dropdown-item" data-action="change-name"><div class="di-icon"><i class="fa-solid fa-user-secret"></i></div> Change Identity</button>
             <div class="dropdown-divider"></div>
-            <button class="dropdown-item" data-action="clear-posts"><div class="di-icon">🗑️</div> Clear My Posts</button>
-            <button class="dropdown-item danger" data-action="logout"><div class="di-icon">🚪</div> Logout</button>
+            <button class="dropdown-item" data-action="clear-posts"><div class="di-icon"><i class="fa-solid fa-trash"></i></div> Clear My Posts</button>
+            <button class="dropdown-item danger" data-action="logout"><div class="di-icon"><i class="fa-solid fa-right-from-bracket"></i></div> Logout</button>
           </div>
         </div>
       </div>
@@ -53,28 +54,28 @@
   <div class="container page-wrapper">
     <section class="dash-section">
       <div class="dash-hero">
-        <h1>Welcome, <span id="heroName">User</span> 🎉</h1>
+        <h1>Welcome, <span id="heroName">User</span> </h1>
         <p>Your anonymous journey starts here</p>
       </div>
 
       <div class="stats-row">
         <div class="stat-glass glass">
-          <span class="stat-emoji">📝</span>
+          <span class="stat-emoji"><i class="fa-solid fa-file-pen"></i></span>
           <div class="stat-val" id="statProblems">0</div>
           <div class="stat-lbl">Problems Shared</div>
         </div>
         <div class="stat-glass glass">
-          <span class="stat-emoji">💬</span>
+          <span class="stat-emoji"><i class="fa-solid fa-comment"></i></span>
           <div class="stat-val" id="statResponses">0</div>
           <div class="stat-lbl">Responses Given</div>
         </div>
         <div class="stat-glass glass">
-          <span class="stat-emoji">🤝</span>
+          <span class="stat-emoji"><i class="fa-solid fa-handshake"></i></span>
           <div class="stat-val" id="statHelped">0</div>
           <div class="stat-lbl">People Helped</div>
         </div>
         <div class="stat-glass glass">
-          <span class="stat-emoji">�</span>
+          <span class="stat-emoji"></span>
           <div class="stat-val" id="statTrustScore">0</div>
           <div class="stat-lbl">Trust Score</div>
         </div>
@@ -82,7 +83,7 @@
 
       <div class="dash-cta">
         <button class="btn btn-glow btn-pill" id="goBoard" style="width:auto;padding:18px 48px;font-size:1.02rem">
-          🚀 Go to Community Board
+          <i class="fa-solid fa-paper-plane"></i> Go to Community Board
         </button>
       </div>
     </section>
@@ -92,20 +93,20 @@
   <footer class="taskbar">
     <div class="taskbar-inner">
       <button class="tb-item active" data-page="dashboard.html">
-        <span class="tb-icon">📊</span>
+        <span class="tb-icon"><i class="fa-solid fa-chart-line"></i></span>
         <span>Dashboard</span>
       </button>
       <button class="tb-item" data-page="community.html">
-        <span class="tb-icon">🏠</span>
+        <span class="tb-icon"><i class="fa-solid fa-house"></i></span>
         <span>Board</span>
       </button>
-      <button class="tb-compose" id="tbCompose">✏️</button>
+      <button class="tb-compose" id="tbCompose"><i class="fa-solid fa-pen"></i></button>
       <button class="tb-item" data-page="community.html">
-        <span class="tb-icon">🔍</span>
+        <span class="tb-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
         <span>Explore</span>
       </button>
       <button class="tb-item" data-page="profile.html">
-        <span class="tb-icon">👤</span>
+        <span class="tb-icon"><i class="fa-solid fa-user"></i></span>
         <span>Profile</span>
       </button>
     </div>
@@ -115,8 +116,8 @@
   <div class="modal-overlay" id="composerModal">
     <div class="modal-glass">
       <div class="modal-top">
-        <h3>🎭 Share Anonymously</h3>
-        <button class="modal-close" id="modalClose">✕</button>
+        <h3><i class="fa-solid fa-user-secret"></i> Share Anonymously</h3>
+        <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="field">
@@ -125,15 +126,15 @@
       </div>
       <div class="field">
         <label class="field-label">Description</label>
-        <textarea class="field-textarea" id="mBody" placeholder="Describe your problem in detail…"></textarea>
+        <textarea class="field-textarea" id="mBody" placeholder="Describe your problem in detail&hellip;"></textarea>
       </div>
 
       <div class="tag-row">
-        <button class="tag-chip" data-tag="general">⚪ General</button>
-        <button class="tag-chip" data-tag="urgent">🔴 Urgent</button>
-        <button class="tag-chip" data-tag="help">🟡 Need Help</button>
-        <button class="tag-chip" data-tag="discussion">🔵 Discussion</button>
-        <button class="tag-chip" data-tag="advice">🟣 Advice</button>
+        <button class="tag-chip" data-tag="general"><span class="status-dot dot-gray"></span> General</button>
+        <button class="tag-chip" data-tag="urgent"><span class="status-dot dot-red"></span> Urgent</button>
+        <button class="tag-chip" data-tag="help"><span class="status-dot dot-yellow"></span> Need Help</button>
+        <button class="tag-chip" data-tag="discussion"><span class="status-dot dot-blue"></span> Discussion</button>
+        <button class="tag-chip" data-tag="advice"><span class="status-dot dot-purple"></span> Advice</button>
       </div>
 
       <div class="composer-footer">
@@ -144,7 +145,7 @@
           </label>
           <span>Post Anonymously</span>
         </div>
-        <button class="btn btn-glow btn-sm" id="modalPostBtn" style="width:auto">🚀 Post</button>
+        <button class="btn btn-glow btn-sm" id="modalPostBtn" style="width:auto"><i class="fa-solid fa-paper-plane"></i> Post</button>
       </div>
     </div>
   </div>
