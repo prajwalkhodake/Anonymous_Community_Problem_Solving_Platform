@@ -11,6 +11,24 @@ const LS = {
 };
 
 // ════════════════════════════════════════
+// CONTENT MODERATION (ABUSE / 18+)
+// ════════════════════════════════════════
+const RESTRICTED_WORDS = [
+  'abuse', 'kill', 'murder', 'suicide', 'fuck', 'shit', 'bitch', 'asshole', 'cunt', 
+  'slut', 'whore', 'dick', 'pussy', 'porn', 'sex', 'nude', 'nsfw', 'rape', 'pedophile'
+];
+
+function containsRestrictedContent(text) {
+  if (!text) return false;
+  const lowerText = text.toLowerCase();
+  return RESTRICTED_WORDS.some(word => {
+    // Check for exact word match to avoid blocking words like "glass" because it contains "ass"
+    const regex = new RegExp(`\\b${word}\\b`, 'i');
+    return regex.test(lowerText);
+  });
+}
+
+// ════════════════════════════════════════
 // TOAST
 // ════════════════════════════════════════
 function toast(msg, type = 'info') {
@@ -349,6 +367,10 @@ function initUsername() {
     const final = custom || cur;
     if (final.length < 3) return toast('Min 3 characters', 'error');
 
+    if (containsRestrictedContent(final)) {
+      return toast('Name contains restricted words', 'error');
+    }
+
     const users = LS.get('anon_users') || [];
     const problems = LS.get('anon_problems') || [];
     
@@ -475,6 +497,10 @@ function initModalComposer(user, uname) {
       const title = $('#mTitle').value.trim();
       const body = $('#mBody').value.trim();
       if (!title || !body) return toast('Title & description needed', 'error');
+
+      if (containsRestrictedContent(title) || containsRestrictedContent(body)) {
+        return toast('Please remove abusive or 18+ content', 'error');
+      }
 
       const tog = $('#mAnonToggle');
       const anon = tog ? tog.checked : true;
@@ -642,6 +668,11 @@ function bindPostEvents() {
       const input = $(`#ri-${id}`);
       const text = input?.value.trim();
       if (!text) return toast('Write something', 'error');
+
+      if (containsRestrictedContent(text)) {
+        return toast('Please remove abusive or 18+ content', 'error');
+      }
+
       const uname = LS.get('anon_username');
       const all = LS.get('anon_problems') || [];
       const p = all.find(x => x.id === id);

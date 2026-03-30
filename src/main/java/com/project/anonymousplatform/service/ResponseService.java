@@ -20,6 +20,10 @@ public class ResponseService {
     }
 
     public Response createResponse(Response response) {
+        if (ContentModerationUtil.containsRestrictedContent(response.getContent())) {
+            throw new IllegalArgumentException("Response contains restricted (abusive or 18+) material.");
+        }
+
         if (response.getCreatedAt() == null) {
             response.setCreatedAt(LocalDateTime.now());
         }
@@ -54,6 +58,10 @@ public class ResponseService {
     public Response updateResponse(Long id, Response updatedResponse) {
         if (id == null) {
             throw new IllegalArgumentException("The given id must not be null");
+        }
+        
+        if (updatedResponse != null && ContentModerationUtil.containsRestrictedContent(updatedResponse.getContent())) {
+            throw new IllegalArgumentException("Updated response contains restricted (abusive or 18+) material.");
         }
         
         Response existingResponse = responseRepository.findById(id)

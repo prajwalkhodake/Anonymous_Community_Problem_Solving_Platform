@@ -17,6 +17,9 @@ public class UserService {
     }
 
     public User createUser(String anonymousName) {
+        if (ContentModerationUtil.containsRestrictedContent(anonymousName)) {
+            throw new IllegalArgumentException("Username contains restricted (abusive or 18+) material.");
+        }
         if (userRepository.findByAnonymousName(anonymousName).isPresent()) {
             throw new IllegalArgumentException("Username is already taken");
         }

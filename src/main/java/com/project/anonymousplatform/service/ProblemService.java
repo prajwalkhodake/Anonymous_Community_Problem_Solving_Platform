@@ -20,6 +20,11 @@ public class ProblemService {
     }
 
     public Problem createProblem(Problem problem) {
+        if (ContentModerationUtil.containsRestrictedContent(problem.getTitle()) || 
+            ContentModerationUtil.containsRestrictedContent(problem.getDescription())) {
+            throw new IllegalArgumentException("Content contains restricted (abusive or 18+) material.");
+        }
+
         if (problem.getCreatedAt() == null) {
             problem.setCreatedAt(LocalDateTime.now());
         }
@@ -60,6 +65,11 @@ public class ProblemService {
     public Problem updateProblem(Long id, Problem updatedProblem) {
         if (id == null) {
             throw new IllegalArgumentException("The given id must not be null");
+        }
+        
+        if (updatedProblem != null && (ContentModerationUtil.containsRestrictedContent(updatedProblem.getTitle()) || 
+            ContentModerationUtil.containsRestrictedContent(updatedProblem.getDescription()))) {
+            throw new IllegalArgumentException("Updated content contains restricted (abusive or 18+) material.");
         }
         
         Problem existingProblem = problemRepository.findById(id)
