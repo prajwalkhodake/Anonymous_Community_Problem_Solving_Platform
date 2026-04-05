@@ -1,0 +1,5 @@
+target/
+.idea/
+*.class
+.DS_Store
+application.properties
