@@ -2,22 +2,28 @@ package com.project.anonymousplatform.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-@Table(name = "project")
+@Table(name = "project")       // ← matches your database_setup.sql table name
 public class Problem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "title")
     private String title;
 
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "category")
     private String category;
 
-    private String status;
+    @Column(name = "status")
+    private String status = "OPEN";
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -25,74 +31,39 @@ public class Problem {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "author_id")
     private User author;
 
-    public Problem() {
-    }
+    @OneToMany(mappedBy = "problem", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Response> responses;
 
-    public Long getId() {
-        return id;
-    }
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String getTitle() {
-        return title;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
-    public String getDescription() {
-        return description;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getCategory() {
-        return category;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setCategory(String category) {
-        this.category = category;
-    }
+    public User getAuthor() { return author; }
+    public void setAuthor(User author) { this.author = author; }
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
+    public List<Response> getResponses() { return responses; }
+    public void setResponses(List<Response> responses) { this.responses = responses; }
 }

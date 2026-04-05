@@ -30,58 +30,26 @@ public class Response {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    public Response() {
-    }
+    public Response() {}
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }   // ← was missing
 
-    public Problem getProblem() {
-        return problem;
-    }
+    public Problem getProblem() { return problem; }
+    public void setProblem(Problem problem) { this.problem = problem; }
 
-    public void setProblem(Problem problem) {
-        this.problem = problem;
-    }
+    public User getAuthor() { return author; }
+    public void setAuthor(User author) { this.author = author; }
 
-    public String getResponseType() {
-        return responseType;
-    }
+    public String getResponseType() { return responseType; }
+    public void setResponseType(String responseType) { this.responseType = responseType; }
 
-    public void setResponseType(String responseType) {
-        this.responseType = responseType;
-    }
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
-    public String getContent() {
-        return content;
-    }
+    public Boolean getIsHelpful() { return isHelpful; }
+    public void setIsHelpful(Boolean isHelpful) { this.isHelpful = isHelpful; }
 
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public User getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(User author) {
-        this.author = author;
-    }
-
-    public Boolean getIsHelpful() {
-        return isHelpful;
-    }
-
-    public void setIsHelpful(Boolean isHelpful) {
-        this.isHelpful = isHelpful;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

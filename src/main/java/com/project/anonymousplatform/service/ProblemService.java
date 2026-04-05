@@ -4,44 +4,26 @@ import com.project.anonymousplatform.entity.Problem;
 import com.project.anonymousplatform.repository.ProblemRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDateTime;
 
 @Service
 public class ProblemService {
 
     private final ProblemRepository problemRepository;
-    private final UserService userService;
 
-    public ProblemService(ProblemRepository problemRepository, UserService userService) {
+    public ProblemService(ProblemRepository problemRepository) {
         this.problemRepository = problemRepository;
-        this.userService = userService;
     }
 
     public Problem createProblem(Problem problem) {
-        if (ContentModerationUtil.containsRestrictedContent(problem.getTitle()) || 
-            ContentModerationUtil.containsRestrictedContent(problem.getDescription())) {
-            throw new IllegalArgumentException("Content contains restricted (abusive or 18+) material.");
-        }
-
-        if (problem.getCreatedAt() == null) {
-            problem.setCreatedAt(LocalDateTime.now());
-        }
-        if (problem.getUpdatedAt() == null) {
-            problem.setUpdatedAt(LocalDateTime.now());
-        }
+        problem.setCreatedAt(LocalDateTime.now());
+        problem.setUpdatedAt(LocalDateTime.now());
         if (problem.getStatus() == null) {
             problem.setStatus("OPEN");
         }
-        Problem savedProblem = problemRepository.save(problem);
-        
-        // Award 5 trust score points for sharing a problem/asking for help
-        if (savedProblem.getAuthor() != null) {
-            userService.increaseTrustScore(savedProblem.getAuthor().getId(), 5);
-        }
-        
-        return savedProblem;
+        return problemRepository.save(problem);
     }
 
     public List<Problem> getAllProblems() {
@@ -49,46 +31,23 @@ public class ProblemService {
     }
 
     public Optional<Problem> getProblemById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
         return problemRepository.findById(id);
     }
 
-    public void deleteProblem(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
-        problemRepository.deleteById(id);
+    // ← this fixes "Cannot resolve getProblemsByUserId" error
+    public List<Problem> getProblemsByUserId(Long userId) {
+        return problemRepository.findByAuthorId(userId);
     }
 
-    public Problem updateProblem(Long id, Problem updatedProblem) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
-        
-        if (updatedProblem != null && (ContentModerationUtil.containsRestrictedContent(updatedProblem.getTitle()) || 
-            ContentModerationUtil.containsRestrictedContent(updatedProblem.getDescription()))) {
-            throw new IllegalArgumentException("Updated content contains restricted (abusive or 18+) material.");
-        }
-        
-        Problem existingProblem = problemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Problem not found with id " + id));
+    // ← this fixes "Cannot resolve getProblemsByCategory" error
+    public List<Problem> getProblemsByCategory(String category) {
+        return problemRepository.findByCategory(category);
+    }
 
-        if (updatedProblem.getTitle() != null) {
-            existingProblem.setTitle(updatedProblem.getTitle());
+    public void deleteProblem(Long id) {
+        if (!problemRepository.existsById(id)) {
+            throw new IllegalArgumentException("Problem not found with id: " + id);
         }
-        if (updatedProblem.getDescription() != null) {
-            existingProblem.setDescription(updatedProblem.getDescription());
-        }
-        if (updatedProblem.getCategory() != null) {
-            existingProblem.setCategory(updatedProblem.getCategory());
-        }
-        if (updatedProblem.getStatus() != null) {
-            existingProblem.setStatus(updatedProblem.getStatus());
-        }
-        existingProblem.setUpdatedAt(LocalDateTime.now());
-        
-        return problemRepository.save(existingProblem);
+        problemRepository.deleteById(id);
     }
 }

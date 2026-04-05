@@ -4,91 +4,59 @@ import com.project.anonymousplatform.entity.Response;
 import com.project.anonymousplatform.repository.ResponseRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.time.LocalDateTime;
 
 @Service
 public class ResponseService {
 
     private final ResponseRepository responseRepository;
-    private final UserService userService;
 
-    public ResponseService(ResponseRepository responseRepository, UserService userService) {
+    public ResponseService(ResponseRepository responseRepository) {
         this.responseRepository = responseRepository;
-        this.userService = userService;
     }
 
     public Response createResponse(Response response) {
-        if (ContentModerationUtil.containsRestrictedContent(response.getContent())) {
-            throw new IllegalArgumentException("Response contains restricted (abusive or 18+) material.");
+        if (response.getContent() == null || response.getContent().trim().isEmpty()) {
+            throw new IllegalArgumentException("Response content cannot be empty");
         }
-
-        if (response.getCreatedAt() == null) {
-            response.setCreatedAt(LocalDateTime.now());
+        response.setCreatedAt(LocalDateTime.now());
+        if (response.getIsHelpful() == null) {
+            response.setIsHelpful(false);
         }
-        Response savedResponse = responseRepository.save(response);
-        
-        // Award 2 trust score points for participating with a response
-        if (savedResponse.getAuthor() != null) {
-            userService.increaseTrustScore(savedResponse.getAuthor().getId(), 2);
-        }
-        
-        return savedResponse;
+        return responseRepository.save(response);
     }
 
     public List<Response> getAllResponses() {
         return responseRepository.findAll();
     }
 
-    public List<Response> getResponsesByProblem(Long problemId) {
-        if (problemId == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
-        return responseRepository.findByProblemId(problemId);
-    }
-
     public Optional<Response> getResponseById(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
         return responseRepository.findById(id);
     }
 
-    public Response updateResponse(Long id, Response updatedResponse) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
-        }
-        
-        if (updatedResponse != null && ContentModerationUtil.containsRestrictedContent(updatedResponse.getContent())) {
-            throw new IllegalArgumentException("Updated response contains restricted (abusive or 18+) material.");
-        }
-        
-        Response existingResponse = responseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Response not found with id " + id));
+    // ← get all responses under a specific problem/post
+    public List<Response> getResponsesByProblemId(Long problemId) {
+        return responseRepository.findByProblemId(problemId);
+    }
 
-        if (updatedResponse.getContent() != null) {
-            existingResponse.setContent(updatedResponse.getContent());
-        }
-        if (updatedResponse.getResponseType() != null) {
-            existingResponse.setResponseType(updatedResponse.getResponseType());
-        }
-        
-        // If the response is marked as helpful and wasn't before
-        if (updatedResponse.getIsHelpful() != null && updatedResponse.getIsHelpful() && !Boolean.TRUE.equals(existingResponse.getIsHelpful())) {
-            existingResponse.setIsHelpful(true);
-            if (existingResponse.getAuthor() != null) {
-                // Award 10 trust score points for a helpful answer
-                userService.increaseTrustScore(existingResponse.getAuthor().getId(), 10);
-            }
-        }
-        
-        return responseRepository.save(existingResponse);
+    // ← get all responses written by a specific user
+    public List<Response> getResponsesByAuthorId(Long authorId) {
+        return responseRepository.findByAuthorId(authorId);
+    }
+
+    // ← mark a response as helpful (increases trust score)
+    public Response markAsHelpful(Long responseId) {
+        Response response = responseRepository.findById(responseId)
+                .orElseThrow(() -> new IllegalArgumentException("Response not found: " + responseId));
+        response.setIsHelpful(true);
+        return responseRepository.save(response);
     }
 
     public void deleteResponse(Long id) {
-        if (id == null) {
-            throw new IllegalArgumentException("The given id must not be null");
+        if (!responseRepository.existsById(id)) {
+            throw new IllegalArgumentException("Response not found with id: " + id);
         }
         responseRepository.deleteById(id);
     }

@@ -2,12 +2,14 @@ package com.project.anonymousplatform.controller;
 
 import com.project.anonymousplatform.entity.Problem;
 import com.project.anonymousplatform.service.ProblemService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/problems")
+@RequestMapping("/api/problems")        // ← add /api prefix to match UserController pattern
+@CrossOrigin(origins = "http://localhost:3000")  // ← allow frontend to call this
 public class ProblemController {
 
     private final ProblemService problemService;
@@ -16,14 +18,43 @@ public class ProblemController {
         this.problemService = problemService;
     }
 
+    // POST /api/problems
     @PostMapping
-    public Problem createProblem(@RequestBody Problem problem) {
-        return problemService.createProblem(problem);
+    public ResponseEntity<Problem> createProblem(@RequestBody Problem problem) {
+        Problem created = problemService.createProblem(problem);
+        return ResponseEntity.ok(created);      // ← return ResponseEntity, not raw object
     }
 
+    // GET /api/problems
     @GetMapping
-    public List<Problem> getAllProblems() {
-        return problemService.getAllProblems();
+    public ResponseEntity<List<Problem>> getAllProblems() {
+        return ResponseEntity.ok(problemService.getAllProblems());
     }
 
+    // GET /api/problems/1
+    @GetMapping("/{id}")                        // ← add get by ID
+    public ResponseEntity<Problem> getProblemById(@PathVariable Long id) {
+        return problemService.getProblemById(id)
+                .map(problem -> ResponseEntity.ok(problem))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // GET /api/problems/user/5  ← get all problems by a specific user
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Problem>> getProblemsByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(problemService.getProblemsByUserId(userId));
+    }
+
+    // GET /api/problems/category/TECH  ← filter by category
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<Problem>> getProblemsByCategory(@PathVariable String category) {
+        return ResponseEntity.ok(problemService.getProblemsByCategory(category));
+    }
+
+    // DELETE /api/problems/1
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProblem(@PathVariable Long id) {
+        problemService.deleteProblem(id);
+        return ResponseEntity.noContent().build();
+    }
 }
