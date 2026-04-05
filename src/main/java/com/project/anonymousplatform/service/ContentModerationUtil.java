@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 public class ContentModerationUtil {
     
     private static final List<String> RESTRICTED_WORDS = Arrays.asList(
-        "abuse", "kill", "murder", "suicide", "fuck", "shit", "bitch", "asshole", "cunt", 
+        "abuse", "kill", "murder", "suicide", "fuck", "shit", "bitch", "asshole", "cunt", "ass", "bastard", "dickhead",
         "slut", "whore", "dick", "pussy", "porn", "sex", "nude", "nsfw", "rape", "pedophile"
     );
 
