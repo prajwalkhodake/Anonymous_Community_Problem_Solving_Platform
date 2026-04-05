@@ -367,8 +367,12 @@ function initUsername() {
     const final = custom || cur;
     if (final.length < 3) return toast('Min 3 characters', 'error');
 
-    if (containsRestrictedContent(final)) {
-      return toast('Name contains restricted words', 'error');
+    if (authUser && authUser.email) {
+      const emailPart = authUser.email.split('@')[0].toLowerCase();
+      const finalLower = final.toLowerCase();
+      if (emailPart.includes(finalLower) || finalLower.includes(emailPart)) {
+        return toast('Username cannot be similar to your email', 'error');
+      }
     }
 
     const users = LS.get('anon_users') || [];
@@ -431,10 +435,20 @@ function initDashboard() {
 
   const trustScore = (mine.length * 5) + (myResponsesCount * 2);
 
+  // Calculate helpful responses (People Helped)
+  let helpedCount = 0;
+  problems.forEach(p => {
+    (p.responses || []).forEach(r => {
+      if ((r.authorId === user.id || r.authorName === uname) && r.isHelpful) {
+        helpedCount++;
+      }
+    });
+  });
+
   const ep = $('#statProblems'), er = $('#statResponses'), eh = $('#statHelped'), et = $('#statTrustScore');
   if (ep) animNum(ep, mine.length);
   if (er) animNum(er, myResponsesCount);
-  if (eh) animNum(eh, Math.floor(Math.random() * 30) + mine.length + myResponsesCount);
+  if (eh) animNum(eh, helpedCount);
   if (et) animNum(et, trustScore);
 
   const go = $('#goBoard');
@@ -458,6 +472,7 @@ function animNum(el, target) {
 // ════════════════════════════════════════
 let activeFilter = 'all';
 let isAnon = true;
+let searchQuery = '';
 
 function initCommunity() {
   const feed = $('#feed');
@@ -473,6 +488,7 @@ function initCommunity() {
   initModalComposer(user, uname);
   initFilters();
   initCategoryDropdown();
+  initSearch();
   initTaskbar();
 
   const tog = $('#anonToggle');
@@ -482,6 +498,58 @@ function initCommunity() {
 function initModalComposer(user, uname) {
   const chips = $$('.modal-glass .tag-chip');
   let selTag = 'general';
+  let keywordList = [];
+
+  const kwInput = $('#mKeywords');
+  const kwContainer = $('#keywordTags');
+
+  // Set initial active state for 'general' tag
+  chips.forEach(c => {
+    if (c.dataset.tag === 'general') c.classList.add('active');
+  });
+
+  function renderKeywords() {
+    if (!kwContainer) return;
+    kwContainer.innerHTML = keywordList.map((k, i) => `
+      <div class="keyword-tag">
+        <span>#${k}</span>
+        <i class="fa-solid fa-xmark remove-kw" data-idx="${i}"></i>
+      </div>
+    `).join('');
+    
+    $$('.remove-kw').forEach(btn => {
+      btn.onclick = () => {
+        const idx = parseInt(btn.dataset.idx);
+        keywordList.splice(idx, 1);
+        renderKeywords();
+      };
+    });
+  }
+
+  if (kwInput) {
+    kwInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = kwInput.value.trim().replace(/^#/, '');
+        addKeyword(val);
+      }
+    });
+  }
+
+  function addKeyword(val) {
+    if (val && !keywordList.includes(val)) {
+      keywordList.push(val);
+      if (kwInput) kwInput.value = '';
+      renderKeywords();
+    }
+  }
+
+  // Suggestion chips for composer
+  $$('.comp-suggestion').forEach(chip => {
+    chip.addEventListener('click', () => {
+      addKeyword(chip.dataset.val);
+    });
+  });
 
   chips.forEach(c => {
     c.onclick = () => {
@@ -502,11 +570,13 @@ function initModalComposer(user, uname) {
         return toast('Please remove abusive or 18+ content', 'error');
       }
 
-      const tog = $('#mAnonToggle');
-      const anon = tog ? tog.checked : true;
+      // const tog = $('#mAnonToggle'); // Removed this line as the button was deleted
+      // const anon = tog ? tog.checked : true;
+      const anon = true; // Default to true since it's an anonymous platform
 
       const prob = {
         id: Date.now(), title, body, tag: selTag,
+        keywords: [...keywordList],
         authorId: user.id,
         authorName: anon ? randomName() : uname,
         isAnonymous: anon,
@@ -519,12 +589,22 @@ function initModalComposer(user, uname) {
       LS.set('anon_problems', all);
       $('#mTitle').value = '';
       $('#mBody').value = '';
+      if (kwInput) kwInput.value = '';
+      keywordList = [];
+      renderKeywords();
       chips.forEach(x => x.classList.remove('active'));
       selTag = 'general';
 
       // Close modal
       const overlay = $('#composerModal');
       if (overlay) overlay.classList.remove('show');
+      
+      // Also reset tag to 'general' for next use
+      chips.forEach(x => {
+        if(x.dataset.tag === 'general') x.classList.add('active');
+        else x.classList.remove('active');
+      });
+      selTag = 'general';
 
       toast('Posted anonymously <i class="fa-solid fa-user-secret"></i>', 'success');
       renderFeed();
@@ -556,6 +636,71 @@ function initFilters() {
   });
 }
 
+function initSearch() {
+  const searchInput = $('#searchInput');
+  const searchClearBtn = $('#searchClearBtn');
+  const suggestions = $('#searchSuggestions');
+  const exploreBtn = $('#tbExplore');
+
+  if (!searchInput) return;
+
+  // Explore button scrolls to and focuses search
+  if (exploreBtn) {
+    exploreBtn.addEventListener('click', () => {
+      searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => {
+        searchInput.focus();
+        if (suggestions) suggestions.style.display = 'block';
+      }, 500);
+    });
+  }
+
+  searchInput.addEventListener('focus', () => {
+    if (suggestions) suggestions.style.display = 'block';
+  });
+
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', (e) => {
+    if (suggestions && !suggestions.contains(e.target) && e.target !== searchInput && e.target !== exploreBtn && !exploreBtn?.contains(e.target)) {
+      suggestions.style.display = 'none';
+    }
+  });
+
+  // Suggestion chips
+  $$('.suggestion-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.textContent;
+      searchInput.value = val;
+      searchQuery = val.toLowerCase();
+      if (searchClearBtn) searchClearBtn.style.display = 'grid';
+      if (suggestions) suggestions.style.display = 'none';
+      renderFeed();
+    });
+  });
+
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim().toLowerCase();
+
+    // Show/hide clear button
+    if (searchClearBtn) {
+      searchClearBtn.style.display = searchQuery.length > 0 ? 'grid' : 'none';
+    }
+
+    if (suggestions) suggestions.style.display = searchQuery.length > 0 ? 'none' : 'block';
+
+    renderFeed();
+  });
+
+  if (searchClearBtn) {
+    searchClearBtn.addEventListener('click', () => {
+      searchQuery = '';
+      searchInput.value = '';
+      searchClearBtn.style.display = 'none';
+      renderFeed();
+    });
+  }
+}
+
 function renderFeed() {
   const feed = $('#feed');
   if (!feed) return;
@@ -575,10 +720,27 @@ function renderFeed() {
     if (c) c.textContent = counts[f.dataset.filter] ?? '';
   });
 
+  // Apply category filter
   if (activeFilter !== 'all') problems = problems.filter(p => p.tag === activeFilter);
 
+  // Apply search filter
+  if (searchQuery) {
+    problems = problems.filter(p => {
+      const title = (p.title || '').toLowerCase();
+      const body = (p.body || '').toLowerCase();
+      const author = (p.authorName || '').toLowerCase();
+      const kws = (p.keywords || []).some(k => k.toLowerCase().includes(searchQuery));
+
+      return title.includes(searchQuery) || body.includes(searchQuery) || author.includes(searchQuery) || kws;
+    });
+  }
+
   if (!problems.length) {
-    feed.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-moon"></i></div><h3>Nothing here yet</h3><p>Be the first to share anonymously.</p></div>`;
+    if (searchQuery) {
+      feed.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div><h3>No results found</h3><p>Try searching with different keywords or username.</p></div>`;
+    } else {
+      feed.innerHTML = `<div class="empty"><div class="empty-icon"><i class="fa-solid fa-moon"></i></div><h3>Nothing here yet</h3><p>Be the first to share anonymously.</p></div>`;
+    }
     return;
   }
 
@@ -593,19 +755,51 @@ function buildPost(p) {
   const liked = (p.likedBy || []).includes(user?.id);
   const tm = { urgent:'t-urgent', help:'t-help', discussion:'t-discussion', advice:'t-advice', general:'t-general' };
 
-  const resps = (p.responses || []).map(r => `
-    <div class="resp-item">
-      <a href="profile.html?user=${encodeURIComponent(r.authorName)}" style="text-decoration: none; color: inherit;">
-        <div class="resp-av">${r.authorName.charAt(0).toUpperCase()}</div>
-      </a>
-      <div>
-        <div class="resp-name">
-          <a href="profile.html?user=${encodeURIComponent(r.authorName)}" class="user-link">${r.authorName}</a> 
-          <span class="trust-badge"><i class="fa-regular fa-gem"></i> ${getUserTrustScore(r.authorName)}</span> <span>· ${timeAgo(r.created)}</span>
+  const resps = (p.responses || []).map((r, ri) => {
+    const nestedResps = (r.replies || []).map(nr => `
+      <div class="resp-item nested">
+        <div class="resp-av smaller">${nr.authorName.charAt(0).toUpperCase()}</div>
+        <div style="flex: 1">
+          <div class="resp-name">
+            <span class="user-link">${nr.authorName}</span> <span>· ${timeAgo(nr.created)}</span>
+          </div>
+          <div class="resp-text">${nr.text}</div>
         </div>
-        <div class="resp-text">${r.text}</div>
+      </div>`).join('');
+
+    return `
+    <div class="resp-container">
+      <div class="resp-item">
+        <a href="profile.html?user=${encodeURIComponent(r.authorName)}" style="text-decoration: none; color: inherit;">
+          <div class="resp-av">${r.authorName.charAt(0).toUpperCase()}</div>
+        </a>
+        <div style="flex: 1">
+          <div class="resp-name">
+            <a href="profile.html?user=${encodeURIComponent(r.authorName)}" class="user-link">${r.authorName}</a> 
+            <span class="trust-badge"><i class="fa-regular fa-gem"></i> ${getUserTrustScore(r.authorName)}</span> <span>· ${timeAgo(r.created)}</span>
+          </div>
+          <div class="resp-text">${r.text}</div>
+          <div class="resp-actions">
+            <button class="nested-reply-btn" data-post-id="${p.id}" data-resp-idx="${ri}"><i class="fa-solid fa-reply"></i> Reply</button>
+          </div>
+        </div>
+        ${p.authorId === user?.id ? `
+          <button class="helpful-btn ${r.isHelpful ? 'active' : ''}" data-post-id="${p.id}" data-resp-idx="${ri}" title="Mark as helpful">
+            <i class="fa-solid fa-circle-check"></i>
+          </button>
+        ` : r.isHelpful ? `
+          <div class="helpful-badge" title="Author marked this as helpful"><i class="fa-solid fa-circle-check"></i></div>
+        ` : ''}
       </div>
-    </div>`).join('');
+      <div class="nested-responses">${nestedResps}</div>
+      <div class="nested-input-wrap hidden" id="niw-${p.id}-${ri}">
+        <input class="field-input field-input--plain smaller" placeholder="Reply to ${r.authorName}…" id="ni-${p.id}-${ri}">
+        <button class="btn btn-amber btn-sm send-nested-resp" data-post-id="${p.id}" data-resp-idx="${ri}">Send</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const kwDisplay = (p.keywords || []).map(k => `<span class="post-keyword-pill">#${k}</span>`).join('');
 
   return `
     <div class="post-glass glass-static" data-id="${p.id}">
@@ -626,6 +820,7 @@ function buildPost(p) {
       </div>
       <div class="post-title">${p.title}</div>
       <div class="post-body">${p.body}</div>
+      <div class="post-keyword-display">${kwDisplay}</div>
       <div class="post-actions">
         <button class="act-btn like-btn ${liked?'liked':''}" data-id="${p.id}">${liked?'<i class="fa-solid fa-heart" style="color: #ff4b4b;"></i>':'<i class="fa-regular fa-heart"></i>'} ${p.likes||0}</button>
         <button class="act-btn reply-toggle" data-id="${p.id}"><i class="fa-solid fa-comment"></i> ${p.responses?.length||0} replies</button>
@@ -660,6 +855,59 @@ function bindPostEvents() {
 
   $$('.reply-toggle').forEach(b => {
     b.onclick = () => { const w = $(`#rw-${b.dataset.id}`); if (w) w.classList.toggle('hidden'); };
+  });
+
+  $$('.helpful-btn').forEach(b => {
+    b.onclick = () => {
+      const pid = +b.dataset.postId;
+      const ridx = +b.dataset.respIdx;
+      const all = LS.get('anon_problems') || [];
+      const p = all.find(x => x.id === pid);
+      if (p && p.responses && p.responses[ridx]) {
+        p.responses[ridx].isHelpful = !p.responses[ridx].isHelpful;
+        LS.set('anon_problems', all);
+        renderFeed();
+      }
+    };
+  });
+
+  $$('.nested-reply-btn').forEach(b => {
+    b.onclick = () => {
+      const pid = b.dataset.postId;
+      const ridx = b.dataset.respIdx;
+      const w = $(`#niw-${pid}-${ridx}`);
+      if (w) w.classList.toggle('hidden');
+    };
+  });
+
+  $$('.send-nested-resp').forEach(b => {
+    b.onclick = () => {
+      const pid = +b.dataset.postId;
+      const ridx = +b.dataset.respIdx;
+      const input = $(`#ni-${pid}-${ridx}`);
+      const text = input?.value.trim();
+      if (!text) return toast('Write something', 'error');
+
+      if (containsRestrictedContent(text)) {
+        return toast('Please remove abusive or 18+ content', 'error');
+      }
+
+      const uname = LS.get('anon_username');
+      const all = LS.get('anon_problems') || [];
+      const p = all.find(x => x.id === pid);
+      if (p && p.responses && p.responses[ridx]) {
+        if (!p.responses[ridx].replies) p.responses[ridx].replies = [];
+        p.responses[ridx].replies.push({
+          text,
+          authorName: uname,
+          created: new Date().toISOString()
+        });
+        LS.set('anon_problems', all);
+        input.value = '';
+        renderFeed();
+        toast('Reply sent', 'success');
+      }
+    };
   });
 
   $$('.send-resp').forEach(b => {

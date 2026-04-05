@@ -114,6 +114,29 @@
 
         <!-- FEED -->
         <div class="feed">
+          <!-- Search Bar -->
+          <div class="search-bar-section">
+            <div class="search-bar-glass glass-static">
+              <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input class="search-input" type="text" id="searchInput" placeholder="Search by keywords, title, or username..." autocomplete="off">
+                <button class="search-clear-btn" id="searchClearBtn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="search-suggestions" id="searchSuggestions" style="display:none;">
+                <div class="suggestion-header">Suggested Keywords</div>
+                <div class="suggestion-chips">
+                  <span class="suggestion-chip">Mental Health</span>
+                  <span class="suggestion-chip">Career Advice</span>
+                  <span class="suggestion-chip">Relationships</span>
+                  <span class="suggestion-chip">Programming</span>
+                  <span class="suggestion-chip">Student Life</span>
+                  <span class="suggestion-chip">Urgent Help</span>
+                  <span class="suggestion-chip">Anonymous Tips</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div id="feed">
             <div class="spinner"></div>
           </div>
@@ -134,7 +157,7 @@
         <span>Board</span>
       </button>
       <button class="tb-compose" id="tbCompose"><i class="fa-solid fa-pen"></i></button>
-      <button class="tb-item" data-page="community.html">
+      <button class="tb-item" id="tbExplore">
         <span class="tb-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
         <span>Explore</span>
       </button>
@@ -162,6 +185,22 @@
         <textarea class="field-textarea" id="mBody" placeholder="Describe your problem in detail. The community is here to help&hellip;"></textarea>
       </div>
 
+      <div class="field">
+        <label class="field-label">Keywords (Press Enter to add)</label>
+        <div class="keyword-tags-input-wrapper">
+          <div id="keywordTags" class="keyword-tags"></div>
+          <input class="field-input field-input--plain" type="text" id="mKeywords" placeholder="Add keywords..." autocomplete="off">
+        </div>
+        <div class="composer-suggestions" id="composerSuggestions">
+          <span class="comp-suggestion" data-val="Mental Health">Mental Health</span>
+          <span class="comp-suggestion" data-val="Career Advice">Career Advice</span>
+          <span class="comp-suggestion" data-val="Relationships">Relationships</span>
+          <span class="comp-suggestion" data-val="Programming">Programming</span>
+          <span class="comp-suggestion" data-val="Student Life">Student Life</span>
+          <span class="comp-suggestion" data-val="Urgent Help">Urgent Help</span>
+        </div>
+      </div>
+
       <div class="tag-row">
         <button class="tag-chip" data-tag="general"><span class="status-dot dot-gray"></span> General</button>
         <button class="tag-chip" data-tag="urgent"><span class="status-dot dot-red"></span> Urgent</button>
@@ -171,13 +210,6 @@
       </div>
 
       <div class="composer-footer">
-        <div class="toggle-wrap">
-          <label class="toggle">
-            <input type="checkbox" id="anonToggle" checked>
-            <span class="toggle-track"></span>
-          </label>
-          <span>Post Anonymously</span>
-        </div>
         <button class="btn btn-glow btn-sm" id="modalPostBtn" style="width:auto"><i class="fa-solid fa-paper-plane"></i> Post</button>
       </div>
     </div>
