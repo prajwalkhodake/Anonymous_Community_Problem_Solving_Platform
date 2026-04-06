@@ -256,8 +256,10 @@ function initAuth() {
   const lf = $('#formLogin'), sf = $('#formSignup');
   if (!lt) return;
 
-  if (LS.get('anon_user')) {
-    window.location.href = LS.get('anon_username') ? 'community.html' : 'username.html';
+  const currentUser = LS.get('anon_user');
+  if (currentUser) {
+    if (currentUser.username) LS.set('anon_username', currentUser.username);
+    window.location.href = currentUser.username ? 'community.html' : 'username.html';
     return;
   }
 
@@ -278,10 +280,14 @@ function initAuth() {
     const users = LS.get('anon_users') || [];
     const found = users.find(u => u.email === email && u.password === pass);
     if (!found) return toast('Invalid credentials', 'error');
+    
+    // Set user and their old username if they have one
     LS.set('anon_user', found);
+    if (found.username) LS.set('anon_username', found.username);
+    
     toast('Welcome back! ', 'success');
     setTimeout(() => {
-      window.location.href = LS.get('anon_username') ? 'community.html' : 'username.html';
+      window.location.href = found.username ? 'community.html' : 'username.html';
     }, 700);
   };
 
@@ -300,18 +306,7 @@ function initAuth() {
     const users = LS.get('anon_users') || [];
     if (users.find(u => u.email === email)) return toast('Email taken', 'error');
 
-    // Ask for location permission
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => finishSignup(email, pass, users, { lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {
-          toast('Location skipped.', 'warning');
-          finishSignup(email, pass, users, null);
-        }
-      );
-    } else {
-      finishSignup(email, pass, users, null);
-    }
+    finishSignup(email, pass, users, null);
   };
 
   function finishSignup(email, pass, users, location) {
@@ -367,6 +362,8 @@ function initUsername() {
     const final = custom || cur;
     if (final.length < 3) return toast('Min 3 characters', 'error');
 
+    const authUser = LS.get('anon_user');
+
     if (authUser && authUser.email) {
       const emailPart = authUser.email.split('@')[0].toLowerCase();
       const finalLower = final.toLowerCase();
@@ -386,7 +383,6 @@ function initUsername() {
     ));
     if (isTakenInUsers || isTakenInProblems) return toast('Username already taken', 'error');
 
-    const authUser = LS.get('anon_user');
     let msg = `Identity: ${final} <i class="fa-solid fa-user-secret"></i>`;
 
     if (authUser) {
@@ -471,7 +467,7 @@ function animNum(el, target) {
 // PAGE 4: COMMUNITY
 // ════════════════════════════════════════
 let activeFilter = 'all';
-let isAnon = true;
+let isAnon = false;
 let searchQuery = '';
 
 function initCommunity() {
@@ -492,7 +488,7 @@ function initCommunity() {
   initTaskbar();
 
   const tog = $('#anonToggle');
-  if (tog) { tog.checked = true; tog.onchange = () => { isAnon = tog.checked; }; }
+  if (tog) { tog.checked = false; tog.onchange = () => { isAnon = tog.checked; }; }
 }
 
 function initModalComposer(user, uname) {
@@ -570,9 +566,8 @@ function initModalComposer(user, uname) {
         return toast('Please remove abusive or 18+ content', 'error');
       }
 
-      // const tog = $('#mAnonToggle'); // Removed this line as the button was deleted
-      // const anon = tog ? tog.checked : true;
-      const anon = true; // Default to true since it's an anonymous platform
+      const tog = $('#mAnonToggle');
+      const anon = tog ? tog.checked : false;
 
       const prob = {
         id: Date.now(), title, body, tag: selTag,
