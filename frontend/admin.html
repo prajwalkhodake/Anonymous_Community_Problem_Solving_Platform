@@ -165,6 +165,7 @@
     <div class="admin-tabs">
       <button class="admin-tab-btn active" data-target="manageUsers">Manage Users</button>
       <button class="admin-tab-btn" data-target="managePosts">Manage Posts</button>
+      <button class="admin-tab-btn" data-target="manageReports">Manage Reports</button>
     </div>
 
     <!-- Users Panel -->
@@ -203,6 +204,28 @@
             </tr>
           </thead>
           <tbody id="adminPostsTbody">
+            <!-- Rendered via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Reports Panel -->
+    <div class="glass panel-section" id="manageReports">
+      <h3><i class="fa-solid fa-flag"></i> Reports</h3>
+      <div style="overflow-x: auto;">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Reason</th>
+              <th>Reported By</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminReportsTbody">
             <!-- Rendered via JS -->
           </tbody>
         </table>

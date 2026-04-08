@@ -820,6 +820,7 @@ function buildPost(p) {
         <button class="act-btn like-btn ${liked?'liked':''}" data-id="${p.id}">${liked?'<i class="fa-solid fa-heart" style="color: #ff4b4b;"></i>':'<i class="fa-regular fa-heart"></i>'} ${p.likes||0}</button>
         <button class="act-btn reply-toggle" data-id="${p.id}"><i class="fa-solid fa-comment"></i> ${p.responses?.length||0} replies</button>
         <button class="act-btn share-btn"><i class="fa-solid fa-link"></i> Share</button>
+        <button class="act-btn report-btn" data-id="${p.id}" data-type="PROBLEM" style="margin-left: auto; color: var(--text-2);"><i class="fa-solid fa-flag"></i> Report</button>
       </div>
       <div class="responses-wrap hidden" id="rw-${p.id}">
         ${resps}
@@ -863,6 +864,14 @@ function bindPostEvents() {
         LS.set('anon_problems', all);
         renderFeed();
       }
+    };
+  });
+
+  $$('.report-btn').forEach(b => {
+    b.onclick = () => {
+      const id = b.dataset.id;
+      const type = b.dataset.type;
+      openReportModal(id, type);
     };
   });
 
@@ -1111,6 +1120,29 @@ function initAdmin() {
         </tr>
       `).join('');
     }
+
+    // Render Reports
+    const rtbody = $('#adminReportsTbody');
+    if (rtbody) {
+      const reports = LS.get('anon_reports') || [];
+      rtbody.innerHTML = reports.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td><span class="trust-badge">${r.targetType}</span></td>
+          <td>${r.reason.length > 40 ? r.reason.substring(0,40)+'...' : r.reason}</td>
+          <td>${r.reportedBy}</td>
+          <td>${r.status}</td>
+          <td>
+            <button class="action-btn" style="background: rgba(0, 200, 0, 0.2); border-color: rgba(0,200,0,0.3);" onclick="window.dismissReport(${r.id})">
+              <i class="fa-solid fa-check"></i> Dismiss
+            </button>
+            <button class="action-btn" onclick="window.deleteReportTarget(${r.id})">
+              <i class="fa-solid fa-trash"></i> Delete ${r.targetType.toLowerCase().replace(/^\w/, c => c.toUpperCase())}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
   }
 
   // Global Delete Functions for inline onclick
@@ -1146,6 +1178,52 @@ function initAdmin() {
     toast('Post deleted', 'success');
     renderAdminData();
   };
+
+  window.dismissReport = (reportId) => {
+    let reports = LS.get('anon_reports') || [];
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+    report.status = 'RESOLVED';
+    LS.set('anon_reports', reports);
+    toast('Report dismissed', 'info');
+    renderAdminData();
+  };
+
+  window.deleteReportTarget = (reportId) => {
+    let reports = LS.get('anon_reports') || [];
+    const report = reports.find(r => r.id === reportId);
+    if (!report) return;
+
+    if (!confirm(`Are you sure you want to delete this ${report.targetType}?`)) return;
+
+    if (report.targetType === 'PROBLEM') {
+      let problems = LS.get('anon_problems') || [];
+      problems = problems.filter(p => String(p.id) !== String(report.targetId));
+      LS.set('anon_problems', problems);
+    } else if (report.targetType === 'USER') {
+      let users = LS.get('anon_users') || [];
+      const userToDel = users.find(u => String(u.username) === String(report.targetId)); 
+      if (userToDel) {
+        users = users.filter(u => u.username !== userToDel.username);
+        LS.set('anon_users', users);
+        
+        let problems = LS.get('anon_problems') || [];
+        problems = problems.filter(p => !(p.authorName === userToDel.username));
+        // Remove responses
+        problems.forEach(p => {
+          if(p.responses) p.responses = p.responses.filter(r => !(r.authorName === userToDel.username));
+        });
+        LS.set('anon_problems', problems);
+      }
+    }
+    
+    // Set report as resolved because the target has been acted upon
+    report.status = 'RESOLVED';
+    LS.set('anon_reports', reports);
+    
+    toast('Target deleted and report resolved', 'success');
+    renderAdminData();
+  };
 }
 
 function initProfile() {
@@ -1171,6 +1249,12 @@ function initProfile() {
     if (dashHeroP) dashHeroP.textContent = "Viewing community member";
     if (settingsCard) settingsCard.style.display = 'none'; 
     if (userEmailDisplay) userEmailDisplay.style.display = 'none';
+    
+    const reportUserBtn = document.querySelector('#reportUserBtn');
+    if (reportUserBtn) {
+      reportUserBtn.style.display = 'block';
+      reportUserBtn.onclick = () => openReportModal(targetUser, 'USER');
+    }
   } else {
     if (dashHeroH1) dashHeroH1.textContent = "Your Profile";
     if (dashHeroP) dashHeroP.textContent = "Manage your identity and account settings";

@@ -37,3 +37,14 @@ CREATE TABLE IF NOT EXISTS responses (
     CONSTRAINT fk_response_problem FOREIGN KEY (problem_id) REFERENCES project(id) ON DELETE CASCADE,
     CONSTRAINT fk_response_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 );
+
+-- 6. Create 'reports' table for user reporting content/profiles
+CREATE TABLE IF NOT EXISTS reports (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    target_type VARCHAR(50) NOT NULL, 
+    target_id BIGINT NOT NULL,
+    reason TEXT NOT NULL,
+    status VARCHAR(50) DEFAULT 'PENDING',
+    reported_by VARCHAR(255) NOT NULL,
+    created_at DATETIME
+);
