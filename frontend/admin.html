@@ -98,20 +98,21 @@
   </style>
 </head>
 <body data-page="admin">
-  <div class="glass-bg"></div>
-  <div class="glass-orb orb-1"></div>
-  <div class="glass-orb orb-2"></div>
-  <div class="glass-orb orb-3"></div>
+  <div class="mesh-bg"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="scan-line"></div>
 
   <!-- ADMIN LOGIN SECTION -->
-  <div class="auth-wrap" id="adminLoginSection">
-    <div class="auth-glass glass">
-      <div class="auth-header">
+  <div class="auth-page page-wrapper" id="adminLoginSection">
+    <div class="auth-glass glass-static">
+      <div class="auth-logo">
         <h2 style="color: #ff6b6b;"><i class="fa-solid fa-shield-halved"></i> Admin Portal</h2>
         <p>Restricted access</p>
       </div>
 
-      <form class="auth-form" id="adminLoginForm">
+      <form id="adminLoginForm">
         <div class="field">
           <label class="field-label">Admin ID</label>
           <div class="field-input-wrap">
@@ -126,7 +127,7 @@
             <input class="field-input" type="password" id="adminPass" placeholder="Enter strictly restricted password" required>
           </div>
         </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; background: rgba(239, 68, 68, 0.7);"><i class="fa-solid fa-right-to-bracket"></i> Login as Admin</button>
+        <button type="submit" class="btn btn-glow" style="width: 100%; margin-top: 10px; background: rgba(239, 68, 68, 0.7);"><i class="fa-solid fa-right-to-bracket"></i> Login as Admin</button>
       </form>
       <div style="text-align: center; margin-top: 20px;">
         <a href="index.html" class="auth-link"><i class="fa-solid fa-arrow-left"></i> Back to User Site</a>

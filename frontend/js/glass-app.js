@@ -1043,7 +1043,7 @@ function initAdmin() {
     logoutBtn.onclick = () => {
       sessionStorage.removeItem('admin_auth');
       dashSec.style.display = 'none';
-      loginSec.style.display = 'flex';
+      loginSec.style.display = 'grid';
       toast('Admin logged out', 'info');
     };
   }
