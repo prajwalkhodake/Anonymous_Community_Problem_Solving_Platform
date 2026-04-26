@@ -20,15 +20,18 @@ public class User {
     private String email;
 
     @Column
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Column(name = "is_verified")
     private Boolean isVerified = false;
 
     @Column(name = "verification_code")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String verificationCode;
 
     @Column(name = "code_expiry_time")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private LocalDateTime codeExpiryTime;
 
     @Column(name = "trust_score")

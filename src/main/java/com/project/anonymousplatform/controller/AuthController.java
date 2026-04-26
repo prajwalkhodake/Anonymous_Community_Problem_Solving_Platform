@@ -69,4 +69,16 @@ public class AuthController {
         User user = authService.verifyLogin(email, otp);
         return ResponseEntity.ok(user);
     }
+
+    @PostMapping("/resend-otp")
+    public ResponseEntity<?> resendOtp(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+
+        if (email == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required"));
+        }
+
+        authService.resendOtp(email);
+        return ResponseEntity.ok(Map.of("message", "A new verification code has been sent to your email."));
+    }
 }
