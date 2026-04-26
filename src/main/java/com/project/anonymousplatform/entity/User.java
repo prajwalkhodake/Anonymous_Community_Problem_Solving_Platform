@@ -16,6 +16,21 @@ public class User {
     @Column(name = "anonymous_name", unique = true)
     private String anonymousName;
 
+    @Column(unique = true)
+    private String email;
+
+    @Column
+    private String password;
+
+    @Column(name = "is_verified")
+    private Boolean isVerified = false;
+
+    @Column(name = "verification_code")
+    private String verificationCode;
+
+    @Column(name = "code_expiry_time")
+    private LocalDateTime codeExpiryTime;
+
     @Column(name = "trust_score")
     private Integer trustScore = 0;
 
@@ -55,6 +70,46 @@ public class User {
 
     public void setAnonymousName(String anonymousName) {
         this.anonymousName = anonymousName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public Boolean getIsVerified() {
+        return isVerified;
+    }
+
+    public void setIsVerified(Boolean isVerified) {
+        this.isVerified = isVerified;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public LocalDateTime getCodeExpiryTime() {
+        return codeExpiryTime;
+    }
+
+    public void setCodeExpiryTime(LocalDateTime codeExpiryTime) {
+        this.codeExpiryTime = codeExpiryTime;
     }
 
     public Integer getTrustScore() {

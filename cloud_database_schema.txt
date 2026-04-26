@@ -1,10 +1,11 @@
--- 1. Create the database (if it doesn't already exist)
-CREATE DATABASE IF NOT EXISTS pdl_project;
+-- ══════════════════════════════════════════════════════════════════════════════
+-- CLOUD DATABASE SCHEMA - ANONYMOUS PLATFORM
+-- ══════════════════════════════════════════════════════════════════════════════
 
--- 2. Use the created database
-USE pdl_project;
+-- NOTE: If your cloud database provider already created a database for you,
+-- you can skip the 'CREATE DATABASE' line and just run the 'CREATE TABLE' queries below.
 
--- 3. Create 'users' table
+-- 1. Create 'users' table
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     anonymous_name VARCHAR(255) UNIQUE NOT NULL,
@@ -17,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME
 );
 
--- 4. Create 'project' table (Maps to Problem.java)
+-- 2. Create 'project' table (Maps to Problem.java)
 CREATE TABLE IF NOT EXISTS project (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS project (
     CONSTRAINT fk_project_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 5. Create 'responses' table (Maps to Response.java)
+-- 3. Create 'responses' table (Maps to Response.java)
 CREATE TABLE IF NOT EXISTS responses (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     problem_id BIGINT,
@@ -43,7 +44,7 @@ CREATE TABLE IF NOT EXISTS responses (
     CONSTRAINT fk_response_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 6. Create 'reports' table for user reporting content/profiles
+-- 4. Create 'reports' table for user reporting content/profiles
 CREATE TABLE IF NOT EXISTS reports (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     target_type VARCHAR(50) NOT NULL, 

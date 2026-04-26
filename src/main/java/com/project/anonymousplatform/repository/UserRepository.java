@@ -8,5 +8,7 @@ import java.util.Optional;
 @Repository  // ← add this annotation
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByAnonymousName(String anonymousName);
-    boolean existsByAnonymousName(String anonymousName);  // ← add this (used in UserService to prevent duplicate names)
+    boolean existsByAnonymousName(String anonymousName);
+    Optional<User> findByEmail(String email);
+    boolean existsByEmail(String email);
 }
