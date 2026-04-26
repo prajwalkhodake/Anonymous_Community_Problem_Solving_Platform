@@ -93,7 +93,7 @@ public class AuthService {
     public void initiateLogin(String email, String password) {
         User user = findUserByEmailOrThrow(email);
 
-        if (!user.getPassword().equals(password)) {
+        if (user.getPassword() == null || !user.getPassword().equals(password)) {
             throw new IllegalArgumentException("Invalid email or password");
         }
         if (!user.getIsVerified()) {
