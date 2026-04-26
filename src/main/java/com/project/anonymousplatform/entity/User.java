@@ -19,7 +19,7 @@ public class User {
     @Column(unique = true)
     private String email;
 
-    @Column
+    @Column(name = "password_hash")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
