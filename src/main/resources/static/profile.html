@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anonymous · Profile</title>
+  <link rel="stylesheet" href="css/glass.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-page="profile">
+
+  <div class="mesh-bg"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="scan-line"></div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="dashboard.html" class="nav-brand">
+        <div class="nav-brand-icon"><i class="fa-solid fa-user-secret"></i></div>
+        <span>Anonymous</span>
+      </a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></a>
+        <a href="community.html" class="nav-link"><i class="fa-solid fa-house"></i> <span>Board</span></a>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown">
+          <button class="dropdown-trigger">
+            <div class="trigger-avatar trigger-initial">U</div>
+            <span class="trigger-name">User</span>
+            <span class="trigger-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em"></i></span>
+          </button>
+          <div class="dropdown-menu">
+            <div class="dropdown-header">
+              <div class="dh-name dd-username">User</div>
+              <div class="dh-email dd-email">user@email.com</div>
+              <div class="dh-badge"><i class="fa-solid fa-lock"></i> Anonymous Mode</div>
+            </div>
+            <button class="dropdown-item" data-action="dashboard"><div class="di-icon"><i class="fa-solid fa-chart-line"></i></div> Dashboard</button>
+            <button class="dropdown-item" data-action="community"><div class="di-icon"><i class="fa-solid fa-house"></i></div> Community Board</button>
+            <button class="dropdown-item" data-action="change-name"><div class="di-icon"><i class="fa-solid fa-user-secret"></i></div> Change Identity</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" data-action="clear-posts"><div class="di-icon"><i class="fa-solid fa-trash"></i></div> Clear My Posts</button>
+            <button class="dropdown-item danger" data-action="logout"><div class="di-icon"><i class="fa-solid fa-right-from-bracket"></i></div> Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container page-wrapper">
+        <section class="dash-section">
+      <div class="dash-hero">
+        <h1>Your Profile</h1>
+        <p>Manage your identity and account settings</p>
+      </div>
+
+      <div class="profile-layout" style="display: flex; gap: 30px; flex-wrap: wrap;">
+        
+        <!-- Left Column: User Info & Settings -->
+        <div style="flex: 1; min-width: 300px;">
+          <div class="profile-card glass" style="padding: 30px; text-align: center; margin-bottom: 30px; border-radius: 24px;">
+            <div id="profileAvatar" class="post-avatar av-teal" style="width: 80px; height: 80px; font-size: 2.5rem; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">U</div>
+            <h2 id="profileName" style="font-size: 2rem; margin-bottom: 5px;">Username</h2>
+            <div style="font-size: 1.2rem; color: rgba(255,255,255,0.8); margin-bottom: 10px;">
+              Email: <span id="profileEmail" style="font-size: 1.1rem;">user@email.com</span>
+            </div>
+            <div style="font-size: 1.2rem; color: rgba(255,255,255,0.8);">
+              Trust Score: <span id="profileTrustScore" class="trust-badge" style="font-size: 1.1rem;">0</span>
+            </div>
+            <div style="margin-top: 20px;">
+              <button id="reportUserBtn" class="btn" style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444; display: none; width: 100%;">
+                <i class="fa-solid fa-flag"></i> Report User
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-card glass" style="padding: 30px; border-radius: 24px; margin-bottom: 40px;">
+            <h3 style="margin-bottom: 20px; font-size: 1.3rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;"><i class="fa-solid fa-gear"></i> Settings</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+              <button class="btn btn-ghost" id="settingChangeId" style="justify-content: flex-start; text-align: left; padding: 12px 20px;"><i class="fa-solid fa-user-secret"></i> Change Identity</button>
+              <button class="btn btn-ghost" id="settingUpdateEmail" style="justify-content: flex-start; text-align: left; padding: 12px 20px;"><i class="fa-solid fa-envelope"></i> Update Email Address</button>
+              <button class="btn btn-ghost" id="settingChangePass" style="justify-content: flex-start; text-align: left; padding: 12px 20px;"><i class="fa-solid fa-key"></i> Change Password</button>
+              <button class="btn btn-ghost" id="settingClearPosts" style="justify-content: flex-start; text-align: left; padding: 12px 20px; color: #ff6b6b; border-color: rgba(255,107,107,0.2);"><i class="fa-solid fa-trash"></i> Clear All Posts</button>
+              <button class="btn btn-ghost" id="settingLogout" style="justify-content: flex-start; text-align: left; padding: 12px 20px; color: #ff6b6b; border-color: rgba(255,107,107,0.2);"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Recent Activity -->
+        <div style="flex: 2; min-width: 300px;">
+          <div class="profile-feed glass" style="padding: 30px; border-radius: 24px;">
+            <h3 style="margin-bottom: 20px; font-size: 1.5rem; font-weight: 500;">Your Recent Activity</h3>
+            <div id="profileFeed" class="community-feed"></div> <!-- Reusing community styles -->
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- FOOTER TASKBAR -->
+  <footer class="taskbar">
+    <div class="taskbar-inner">
+      <button class="tb-item" data-page="dashboard.html">
+        <span class="tb-icon"><i class="fa-solid fa-chart-line"></i></span>
+        <span>Dashboard</span>
+      </button>
+      <button class="tb-item" data-page="community.html">
+        <span class="tb-icon"><i class="fa-solid fa-house"></i></span>
+        <span>Board</span>
+      </button>
+      <button class="tb-compose" id="tbCompose"><i class="fa-solid fa-pen"></i></button>
+      <button class="tb-item" data-page="community.html">
+        <span class="tb-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <span>Explore</span>
+      </button>
+      <button class="tb-item active" data-page="profile.html">
+        <span class="tb-icon"><i class="fa-solid fa-user"></i></span>
+        <span>Profile</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- COMPOSER MODAL -->
+  <div class="modal-overlay" id="composerModal">
+    <div class="modal-glass">
+      <div class="modal-top">
+        <h3><i class="fa-solid fa-user-secret"></i> Share Anonymously</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Title</label>
+        <input class="field-input field-input--plain" type="text" id="mTitle" placeholder="What's on your mind?">
+      </div>
+      <div class="field">
+        <label class="field-label">Description</label>
+        <textarea class="field-textarea" id="mBody" placeholder="Describe your problem in detail…"></textarea>
+      </div>
+
+      <div class="tag-row">
+        <button class="tag-chip" data-tag="general"><span class="status-dot dot-gray"></span> General</button>
+        <button class="tag-chip" data-tag="urgent"><span class="status-dot dot-red"></span> Urgent</button>
+        <button class="tag-chip" data-tag="help"><span class="status-dot dot-yellow"></span> Need Help</button>
+        <button class="tag-chip" data-tag="discussion"><span class="status-dot dot-blue"></span> Discussion</button>
+        <button class="tag-chip" data-tag="advice"><span class="status-dot dot-purple"></span> Advice</button>
+      </div>
+
+      <div class="composer-footer">
+        <div class="toggle-wrap">
+          <label class="toggle">
+            <input type="checkbox" id="mAnonToggle" checked>
+            <span class="toggle-track"></span>
+          </label>
+          <span>Post Anonymously</span>
+        </div>
+        <button class="btn btn-glow btn-sm" id="modalPostBtn" style="width:auto"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/glass-app.js"></script>
+</body>
+</html>

@@ -20,12 +20,4 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .allowCredentials(false)
                 .maxAge(3600);
-    }
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve frontend files from the /frontend directory
-        registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/", "file:frontend/");
-    }
 }

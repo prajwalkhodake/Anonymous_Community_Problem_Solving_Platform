@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anonymous &middot; Community</title>
+  <link rel="stylesheet" href="css/glass.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-page="community">
+
+  <div class="mesh-bg"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="glow-orb"></div>
+  <div class="scan-line"></div>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="community.html" class="nav-brand">
+        <div class="nav-brand-icon"><i class="fa-solid fa-user-secret"></i></div>
+        <span>Anonymous</span>
+      </a>
+      <div class="nav-links">
+        <a href="dashboard.html" class="nav-link"><i class="fa-solid fa-chart-line"></i> <span>Dashboard</span></a>
+        <a href="community.html" class="nav-link active"><i class="fa-solid fa-house"></i> <span>Board</span></a>
+
+        <!-- Categories Dropdown -->
+        <div class="dropdown">
+          <button class="dropdown-trigger">
+            <div class="trigger-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <span class="cat-label"><i class="fa-solid fa-globe"></i> All</span>
+            <span class="trigger-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em"></i></span>
+          </button>
+          <div class="dropdown-menu left-align">
+            <div class="dropdown-header">
+              <div class="dh-name">Filter by Category</div>
+            </div>
+            <button class="dropdown-item cat-dropdown-item active" data-filter="all">
+              <div class="di-icon"><i class="fa-solid fa-globe"></i></div> All Posts <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+            <button class="dropdown-item cat-dropdown-item" data-filter="urgent">
+              <div class="di-icon"><span class="status-dot dot-red"></span></div> Urgent <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+            <button class="dropdown-item cat-dropdown-item" data-filter="help">
+              <div class="di-icon"><span class="status-dot dot-yellow"></span></div> Need Help <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+            <button class="dropdown-item cat-dropdown-item" data-filter="discussion">
+              <div class="di-icon"><span class="status-dot dot-blue"></span></div> Discussion <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+            <button class="dropdown-item cat-dropdown-item" data-filter="advice">
+              <div class="di-icon"><span class="status-dot dot-purple"></span></div> Advice <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+            <button class="dropdown-item cat-dropdown-item" data-filter="general">
+              <div class="di-icon"><span class="status-dot dot-gray"></span></div> General <span class="f-count" style="margin-left:auto;font-size:0.7rem;opacity:0.5"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="dropdown">
+          <button class="dropdown-trigger">
+            <div class="trigger-avatar trigger-initial">U</div>
+            <span class="trigger-name">User</span>
+            <span class="trigger-arrow"><i class="fa-solid fa-chevron-down" style="font-size: 0.8em"></i></span>
+          </button>
+          <div class="dropdown-menu">
+            <div class="dropdown-header">
+              <div class="dh-name dd-username">User</div>
+              <div class="dh-email dd-email">user@email.com</div>
+              <div class="dh-badge"><i class="fa-solid fa-lock"></i> Anonymous Mode</div>
+            </div>
+            <button class="dropdown-item" data-action="dashboard"><div class="di-icon"><i class="fa-solid fa-chart-line"></i></div> Dashboard</button>
+            <button class="dropdown-item" data-action="community"><div class="di-icon"><i class="fa-solid fa-house"></i></div> Community Board</button>
+            <button class="dropdown-item" data-action="change-name"><div class="di-icon"><i class="fa-solid fa-user-secret"></i></div> Change Identity</button>
+            <div class="dropdown-divider"></div>
+            <button class="dropdown-item" data-action="clear-posts"><div class="di-icon"><i class="fa-solid fa-trash"></i></div> Clear My Posts</button>
+            <button class="dropdown-item danger" data-action="logout"><div class="di-icon"><i class="fa-solid fa-right-from-bracket"></i></div> Logout</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container page-wrapper">
+    <section class="community-section">
+      <div class="community-grid">
+
+        <!-- SIDEBAR -->
+        <aside>
+          <div class="sidebar-glass glass-static">
+            <div class="sidebar-title">Categories</div>
+            <div class="filter-list">
+              <button class="filter-item active" data-filter="all"><i class="fa-solid fa-globe"></i> All Posts <span class="f-count">&mdash;</span></button>
+              <button class="filter-item" data-filter="urgent"><span class="status-dot dot-red"></span> Urgent <span class="f-count"></span></button>
+              <button class="filter-item" data-filter="help"><span class="status-dot dot-yellow"></span> Need Help <span class="f-count"></span></button>
+              <button class="filter-item" data-filter="discussion"><span class="status-dot dot-blue"></span> Discussion <span class="f-count"></span></button>
+              <button class="filter-item" data-filter="advice"><span class="status-dot dot-purple"></span> Advice <span class="f-count"></span></button>
+              <button class="filter-item" data-filter="general"><span class="status-dot dot-gray"></span> General <span class="f-count"></span></button>
+            </div>
+          </div>
+          <div class="rules-glass glass-static">
+            <div class="sidebar-title">Community Rules</div>
+            <p>
+              <i class="fa-solid fa-check"></i> Be kind &amp; supportive<br>
+              <i class="fa-solid fa-check"></i> Respect anonymity<br>
+              <i class="fa-solid fa-check"></i> Offer genuine advice<br>
+              <i class="fa-solid fa-xmark"></i> No hate speech<br>
+              <i class="fa-solid fa-xmark"></i> No personal attacks
+            </p>
+          </div>
+        </aside>
+
+        <!-- FEED -->
+        <div class="feed">
+          <!-- Search Bar -->
+          <div class="search-bar-section">
+            <div class="search-bar-glass glass-static">
+              <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input class="search-input" type="text" id="searchInput" placeholder="Search by keywords, title, or username..." autocomplete="off">
+                <button class="search-clear-btn" id="searchClearBtn" style="display:none;"><i class="fa-solid fa-xmark"></i></button>
+              </div>
+              <div class="search-suggestions" id="searchSuggestions" style="display:none;">
+                <div class="suggestion-header">Suggested Keywords</div>
+                <div class="suggestion-chips">
+                  <span class="suggestion-chip">Mental Health</span>
+                  <span class="suggestion-chip">Career Advice</span>
+                  <span class="suggestion-chip">Relationships</span>
+                  <span class="suggestion-chip">Programming</span>
+                  <span class="suggestion-chip">Student Life</span>
+                  <span class="suggestion-chip">Urgent Help</span>
+                  <span class="suggestion-chip">Anonymous Tips</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="feed">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- FOOTER TASKBAR -->
+  <footer class="taskbar">
+    <div class="taskbar-inner">
+      <button class="tb-item" data-page="dashboard.html">
+        <span class="tb-icon"><i class="fa-solid fa-chart-line"></i></span>
+        <span>Dashboard</span>
+      </button>
+      <button class="tb-item active" data-page="community.html">
+        <span class="tb-icon"><i class="fa-solid fa-house"></i></span>
+        <span>Board</span>
+      </button>
+      <button class="tb-compose" id="tbCompose"><i class="fa-solid fa-pen"></i></button>
+      <button class="tb-item" id="tbExplore">
+        <span class="tb-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+        <span>Explore</span>
+      </button>
+      <button class="tb-item" data-page="profile.html">
+        <span class="tb-icon"><i class="fa-solid fa-user"></i></span>
+        <span>Profile</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- COMPOSER MODAL -->
+  <div class="modal-overlay" id="composerModal">
+    <div class="modal-glass">
+      <div class="modal-top">
+        <h3><i class="fa-solid fa-user-secret"></i> Share Anonymously</h3>
+        <button class="modal-close" id="modalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Title</label>
+        <input class="field-input field-input--plain" type="text" id="mTitle" placeholder="What's on your mind?">
+      </div>
+      <div class="field">
+        <label class="field-label">Description</label>
+        <textarea class="field-textarea" id="mBody" placeholder="Describe your problem in detail. The community is here to help&hellip;"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Keywords (Press Enter to add)</label>
+        <div class="keyword-tags-input-wrapper">
+          <div id="keywordTags" class="keyword-tags"></div>
+          <input class="field-input field-input--plain" type="text" id="mKeywords" placeholder="Add keywords..." autocomplete="off">
+        </div>
+        <div class="composer-suggestions" id="composerSuggestions">
+          <span class="comp-suggestion" data-val="Mental Health">Mental Health</span>
+          <span class="comp-suggestion" data-val="Career Advice">Career Advice</span>
+          <span class="comp-suggestion" data-val="Relationships">Relationships</span>
+          <span class="comp-suggestion" data-val="Programming">Programming</span>
+          <span class="comp-suggestion" data-val="Student Life">Student Life</span>
+          <span class="comp-suggestion" data-val="Urgent Help">Urgent Help</span>
+        </div>
+      </div>
+
+      <div class="tag-row">
+        <button class="tag-chip" data-tag="general"><span class="status-dot dot-gray"></span> General</button>
+        <button class="tag-chip" data-tag="urgent"><span class="status-dot dot-red"></span> Urgent</button>
+        <button class="tag-chip" data-tag="help"><span class="status-dot dot-yellow"></span> Need Help</button>
+        <button class="tag-chip" data-tag="discussion"><span class="status-dot dot-blue"></span> Discussion</button>
+        <button class="tag-chip" data-tag="advice"><span class="status-dot dot-purple"></span> Advice</button>
+      </div>
+
+      <div class="composer-footer">
+        <button class="btn btn-glow btn-sm" id="modalPostBtn" style="width:auto"><i class="fa-solid fa-paper-plane"></i> Post</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/glass-app.js"></script>
+</body>
+</html>
