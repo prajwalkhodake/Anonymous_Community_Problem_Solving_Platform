@@ -80,6 +80,23 @@
         <button type="submit" class="btn btn-glow">Create Account →</button>
       </form>
 
+      <form id="formVerify" class="hidden">
+        <div class="auth-logo" style="margin-bottom: 20px;">
+           <p id="verifyMsg" style="font-size: 0.9rem; color: var(--accent-1);">Verification code sent to your email.</p>
+        </div>
+        <div class="field">
+          <label class="field-label">6-Digit Code</label>
+          <div class="field-input-wrap">
+            <span class="field-icon"><i class="fa-solid fa-key"></i></span>
+            <input class="field-input" type="text" id="vOtp" placeholder="Enter OTP" maxlength="6" required style="letter-spacing: 8px; text-align: center; font-weight: bold; font-size: 1.2rem;">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-glow">Verify & Continue →</button>
+        <p style="text-align: center; margin-top: 15px; font-size: 0.8rem; color: var(--text-2);">
+          Didn't get the code? <a href="#" id="resendBtn" style="color: var(--accent-1);">Resend OTP</a>
+        </p>
+      </form>
+
       <div style="margin-top: 25px; text-align: center;">
         <a href="admin.html" style="color: rgba(255,255,255,0.4); font-size: 0.75rem; text-decoration: none; transition: 0.3s;"><i class="fa-solid fa-shield-halved"></i> Admin Portal</a>
       </div>

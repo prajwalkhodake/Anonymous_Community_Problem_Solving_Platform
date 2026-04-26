@@ -271,77 +271,126 @@ function initTaskbar() {
 // ════════════════════════════════════════
 // PAGE 1: AUTH
 // ════════════════════════════════════════
+// ════════════════════════════════════════
+// PAGE 1: AUTH (REAL BACKEND INTEGRATION)
+// ════════════════════════════════════════
+const API_URL = '/api/auth';
+
+// Helper for API calls
+async function apiCall(endpoint, data) {
+  try {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    if (!res.ok) throw new Error(result.error || result.message || 'Action failed');
+    return result;
+  } catch (err) {
+    toast(err.message, 'error');
+    throw err;
+  }
+}
+
 function initAuth() {
   const lt = $('#tabLogin'), st = $('#tabSignup');
-  const lf = $('#formLogin'), sf = $('#formSignup');
+  const lf = $('#formLogin'), sf = $('#formSignup'), vf = $('#formVerify');
+  const switcher = $('.auth-switcher');
+
   if (!lt) return;
 
+  // Auto-redirect if already logged in (local fallback)
   const currentUser = LS.get('anon_user');
   if (currentUser) {
-    if (currentUser.username) LS.set('anon_username', currentUser.username);
-    window.location.href = currentUser.username ? 'community.html' : 'username.html';
+    window.location.href = currentUser.anonymousName ? 'community.html' : 'username.html';
     return;
   }
 
+  let pendingAction = ''; // 'login' or 'register'
+  let pendingEmail = '';
+
   lt.onclick = () => {
     lt.classList.add('active'); st.classList.remove('active');
-    lf.classList.remove('hidden'); sf.classList.add('hidden');
+    lf.classList.remove('hidden'); sf.classList.add('hidden'); vf.classList.add('hidden');
+    switcher.classList.remove('hidden');
   };
   st.onclick = () => {
     st.classList.add('active'); lt.classList.remove('active');
-    sf.classList.remove('hidden'); lf.classList.add('hidden');
+    sf.classList.remove('hidden'); lf.classList.add('hidden'); vf.classList.add('hidden');
+    switcher.classList.remove('hidden');
   };
 
-  lf.onsubmit = (e) => {
+  // 1. INITIATE LOGIN
+  lf.onsubmit = async (e) => {
     e.preventDefault();
     const email = $('#lEmail').value.trim();
-    const pass = $('#lPass').value.trim();
-    if (!email || !pass) return toast('Fill all fields', 'error');
-    const users = LS.get('anon_users') || [];
-    const found = users.find(u => u.email === email && u.password === pass);
-    if (!found) return toast('Invalid credentials', 'error');
+    const password = $('#lPass').value.trim();
     
-    // Set user and their old username if they have one
-    LS.set('anon_user', found);
-    if (found.username) LS.set('anon_username', found.username);
-    
-    toast('Welcome back! ', 'success');
-    setTimeout(() => {
-      window.location.href = found.username ? 'community.html' : 'username.html';
-    }, 700);
+    try {
+      const res = await apiCall('/login', { email, password });
+      pendingEmail = email;
+      pendingAction = 'login';
+      showVerifyScreen('Verification code sent for login.');
+    } catch (e) {}
   };
 
-  sf.onsubmit = (e) => {
+  // 2. INITIATE REGISTER
+  sf.onsubmit = async (e) => {
     e.preventDefault();
     const email = $('#sEmail').value.trim();
-    const pass = $('#sPass').value.trim();
+    const password = $('#sPass').value.trim();
     const conf = $('#sConfirm').value.trim();
     const terms = $('#termsCheck');
     
-    if (!email || !pass || !conf) return toast('Fill all fields', 'error');
-    if (terms && !terms.checked) return toast('Please agree to the Community Rules', 'error');
-    if (pass.length < 6) return toast('Password: 6+ chars', 'error');
-    if (pass !== conf) return toast('Passwords don\'t match', 'error');
-    
-    const users = LS.get('anon_users') || [];
-    if (users.find(u => u.email === email)) return toast('Email taken', 'error');
+    if (password.length < 6) return toast('Password: 6+ chars', 'error');
+    if (password !== conf) return toast('Passwords don\'t match', 'error');
+    if (terms && !terms.checked) return toast('Please agree to terms', 'error');
 
-    finishSignup(email, pass, users, null);
+    try {
+      // For registration, we need a random starting name to satisfy backend
+      const anonymousName = randomName(); 
+      await apiCall('/register', { email, password, anonymousName });
+      pendingEmail = email;
+      pendingAction = 'register';
+      showVerifyScreen('Registration code sent to your email.');
+    } catch (e) {}
   };
 
-  function finishSignup(email, pass, users, location) {
-    const nu = { 
-      id: Date.now(), 
-      email, 
-      password: pass, 
-      created: new Date().toISOString(),
-      location
-    };
-    users.push(nu);
-    LS.set('anon_users', users);
-    LS.set('anon_user', nu);
-    toast('Account created! <i class="fa-solid fa-paper-plane"></i>', 'success');
-    setTimeout(() => { window.location.href = 'username.html'; }, 700);
+  // 3. VERIFY OTP
+  vf.onsubmit = async (e) => {
+    e.preventDefault();
+    const otp = $('#vOtp').value.trim();
+    const endpoint = pendingAction === 'login' ? '/verify-login' : '/verify-registration';
+
+    try {
+      const user = await apiCall(endpoint, { email: pendingEmail, otp });
+      
+      // Save user to local storage for the rest of the app to work
+      LS.set('anon_user', user);
+      if (user.anonymousName) LS.set('anon_username', user.anonymousName);
+
+      toast(pendingAction === 'login' ? 'Welcome back!' : 'Account verified!', 'success');
+      setTimeout(() => {
+        window.location.href = user.anonymousName ? 'community.html' : 'username.html';
+      }, 800);
+    } catch (e) {}
+  };
+
+  // 4. RESEND OTP
+  $('#resendBtn').onclick = (e) => {
+    e.preventDefault();
+    apiCall('/resend-otp', { email: pendingEmail })
+      .then(res => toast(res.message, 'success'));
+  };
+
+  function showVerifyScreen(msg) {
+    lf.classList.add('hidden');
+    sf.classList.add('hidden');
+    switcher.classList.add('hidden');
+    vf.classList.remove('hidden');
+    if ($('#verifyMsg')) $('#verifyMsg').textContent = msg;
+    toast('Code Sent!', 'info');
   }
 }
 
