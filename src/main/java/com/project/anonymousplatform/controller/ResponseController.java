@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/responses")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ResponseController {
 
     private final ResponseService responseService;

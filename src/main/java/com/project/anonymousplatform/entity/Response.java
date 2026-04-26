@@ -22,6 +22,7 @@ public class Response {
     @Column(name = "response_type")
     private String responseType;
 
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "is_helpful")
@@ -30,10 +31,18 @@ public class Response {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (isHelpful == null) {
+            isHelpful = false;
+        }
+    }
+
     public Response() {}
 
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }   // ← was missing
+    public void setId(Long id) { this.id = id; }
 
     public Problem getProblem() { return problem; }
     public void setProblem(Problem problem) { this.problem = problem; }

@@ -30,6 +30,14 @@ public class User {
     @JsonIgnore
     private List<Response> responses;
 
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        if (trustScore == null) {
+            trustScore = 0;
+        }
+    }
+
     public User() {
     }
 

@@ -16,6 +16,18 @@ public class ReportService {
     }
 
     public Report createReport(Report report) {
+        if (report.getTargetType() == null || report.getTargetType().trim().isEmpty()) {
+            throw new IllegalArgumentException("Report target type is required");
+        }
+        if (report.getTargetId() == null) {
+            throw new IllegalArgumentException("Report target ID is required");
+        }
+        if (report.getReason() == null || report.getReason().trim().isEmpty()) {
+            throw new IllegalArgumentException("Report reason is required");
+        }
+        if (report.getReportedBy() == null || report.getReportedBy().trim().isEmpty()) {
+            throw new IllegalArgumentException("Reporter identity is required");
+        }
         return reportRepository.save(report);
     }
 
@@ -28,13 +40,16 @@ public class ReportService {
     }
 
     public void dismissReport(Long id) {
-        reportRepository.findById(id).ifPresent(report -> {
-            report.setStatus("RESOLVED");
-            reportRepository.save(report);
-        });
+        Report report = reportRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Report not found with id: " + id));
+        report.setStatus("RESOLVED");
+        reportRepository.save(report);
     }
 
     public void deleteReport(Long id) {
+        if (!reportRepository.existsById(id)) {
+            throw new IllegalArgumentException("Report not found with id: " + id);
+        }
         reportRepository.deleteById(id);
     }
 }

@@ -9,7 +9,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/problems")        // ← add /api prefix to match UserController pattern
-@CrossOrigin(origins = "http://localhost:3000")  // ← allow frontend to call this
 public class ProblemController {
 
     private final ProblemService problemService;

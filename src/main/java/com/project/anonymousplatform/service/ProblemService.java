@@ -4,7 +4,6 @@ import com.project.anonymousplatform.entity.Problem;
 import com.project.anonymousplatform.repository.ProblemRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,11 +17,23 @@ public class ProblemService {
     }
 
     public Problem createProblem(Problem problem) {
-        problem.setCreatedAt(LocalDateTime.now());
-        problem.setUpdatedAt(LocalDateTime.now());
-        if (problem.getStatus() == null) {
-            problem.setStatus("OPEN");
+        // Validate required fields
+        if (problem.getTitle() == null || problem.getTitle().trim().isEmpty()) {
+            throw new IllegalArgumentException("Problem title cannot be empty");
         }
+        if (problem.getDescription() == null || problem.getDescription().trim().isEmpty()) {
+            throw new IllegalArgumentException("Problem description cannot be empty");
+        }
+
+        // Content moderation check
+        if (ContentModerationUtil.containsRestrictedContent(problem.getTitle())) {
+            throw new IllegalArgumentException("Title contains restricted content");
+        }
+        if (ContentModerationUtil.containsRestrictedContent(problem.getDescription())) {
+            throw new IllegalArgumentException("Description contains restricted content");
+        }
+
+        // Timestamps and status are now handled by @PrePersist in the entity
         return problemRepository.save(problem);
     }
 

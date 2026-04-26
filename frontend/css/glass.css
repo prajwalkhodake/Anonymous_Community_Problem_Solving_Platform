@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 /* ═══════════════════════════════════════
    RESET & VARIABLES
    ═══════════════════════════════════════ */
@@ -41,7 +43,7 @@
      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
    }
    
-   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+   /* @import moved to top of file for correct CSS behavior */
    
    html { scroll-behavior: smooth; }
    
@@ -127,6 +129,7 @@
      pointer-events: none;
      z-index: 0;
      animation: orbPulse 12s ease-in-out infinite alternate;
+     will-change: transform, opacity;
    }
    
    .glow-orb:nth-child(1) {
@@ -168,6 +171,7 @@
      z-index: 0;
      animation: scanMove 7s linear infinite;
      pointer-events: none;
+     will-change: top;
    }
    
    @keyframes scanMove {
@@ -1105,15 +1109,6 @@
      from { opacity: 0; transform: translateY(-10px); }
      to { opacity: 1; transform: translateY(0); }
    }
-     display: grid;
-     place-items: center;
-     font-size: 0.75rem;
-     transition: var(--transition);
-   }
-
-   .search-clear-btn:hover {
-     background: rgba(255, 107, 107, 0.25);
-   }
    
    /* Composer */
    .composer-glass {
@@ -1561,8 +1556,6 @@
      width: 24px;
      height: 24px;
      font-size: 0.65rem;
-     width: 24px !important;
-     height: 24px !important;
    }
 
    .nested-input-wrap {

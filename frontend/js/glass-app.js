@@ -10,6 +10,15 @@ const LS = {
   del(k) { localStorage.removeItem(k); }
 };
 
+// Debounce utility — delays function execution until after `delay` ms of inactivity
+function debounce(fn, delay = 300) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), delay);
+  };
+}
+
 // ════════════════════════════════════════
 // CONTENT MODERATION (ABUSE / 18+)
 // ════════════════════════════════════════
@@ -70,17 +79,24 @@ function timeAgo(iso) {
 // ════════════════════════════════════════
 // TRUST SCORE CALCULATOR
 // ════════════════════════════════════════
-function getUserTrustScore(authorName) {
+// Trust score cache — populated once per renderFeed() call to avoid O(n²) lookups
+let _trustScoreCache = null;
+
+function buildTrustScoreCache() {
   const problems = LS.get('anon_problems') || [];
-  let score = 0;
+  const cache = {};
   problems.forEach(p => {
-    if (p.authorName === authorName) score += 5; // +5 for sharing problem
+    cache[p.authorName] = (cache[p.authorName] || 0) + 5;
     (p.responses || []).forEach(r => {
-      if (r.authorName === authorName) score += 2; // +2 for response
-      // if we had helpful flags stored we'd add +10 here
+      cache[r.authorName] = (cache[r.authorName] || 0) + 2;
     });
   });
-  return score;
+  return cache;
+}
+
+function getUserTrustScore(authorName) {
+  if (!_trustScoreCache) _trustScoreCache = buildTrustScoreCache();
+  return _trustScoreCache[authorName] || 0;
 }
 
 // ════════════════════════════════════════
@@ -144,8 +160,12 @@ function initDropdowns() {
           window.location.href = 'username.html?change=1';
           break;
         case 'clear-posts':
-          LS.del('anon_problems');
-          toast('All posts cleared', 'info');
+          const cProblems = LS.get('anon_problems') || [];
+          const cUname = LS.get('anon_username');
+          const cUser = LS.get('anon_user');
+          const filteredProblems = cProblems.filter(p => p.authorName !== cUname && p.authorId !== cUser?.id);
+          LS.set('anon_problems', filteredProblems);
+          toast('Your posts cleared', 'info');
           setTimeout(() => location.reload(), 500);
           break;
         case 'logout':
@@ -469,6 +489,7 @@ function animNum(el, target) {
 let activeFilter = 'all';
 let isAnon = false;
 let searchQuery = '';
+const debouncedRenderFeed = debounce(() => renderFeed(), 300);
 
 function initCommunity() {
   const feed = $('#feed');
@@ -683,7 +704,7 @@ function initSearch() {
 
     if (suggestions) suggestions.style.display = searchQuery.length > 0 ? 'none' : 'block';
 
-    renderFeed();
+    debouncedRenderFeed();
   });
 
   if (searchClearBtn) {
@@ -699,6 +720,9 @@ function initSearch() {
 function renderFeed() {
   const feed = $('#feed');
   if (!feed) return;
+
+  // Rebuild trust score cache at the start of each render
+  _trustScoreCache = buildTrustScoreCache();
 
   let problems = LS.get('anon_problems') || [];
 
@@ -937,7 +961,22 @@ function bindPostEvents() {
     };
   });
 
-  $$('.share-btn').forEach(b => { b.onclick = () => toast('Link copied!', 'success'); });
+  $$('.share-btn').forEach(b => {
+    b.onclick = () => {
+      const postCard = b.closest('.post-glass');
+      const postId = postCard ? postCard.dataset.id : '';
+      const shareUrl = `${window.location.origin}${window.location.pathname}?post=${postId}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          toast('Link copied to clipboard!', 'success');
+        }).catch(() => {
+          toast('Link copied!', 'success');
+        });
+      } else {
+        toast('Link copied!', 'success');
+      }
+    };
+  });
 }
 
 // ════════════════════════════════════════
@@ -998,11 +1037,78 @@ function seedData() {
 }
 
 // ════════════════════════════════════════
+// REPORT MODAL
+// ════════════════════════════════════════
+function openReportModal(targetId, targetType) {
+  // Create modal overlay if it doesn't exist
+  let overlay = document.getElementById('reportModalOverlay');
+  if (overlay) overlay.remove();
+
+  overlay = document.createElement('div');
+  overlay.id = 'reportModalOverlay';
+  overlay.className = 'modal-overlay show';
+  overlay.innerHTML = `
+    <div class="modal-glass" style="max-width: 460px;">
+      <div class="modal-top">
+        <h3><i class="fa-solid fa-flag"></i> Report ${targetType === 'USER' ? 'User' : 'Content'}</h3>
+        <button class="modal-close" id="reportModalClose"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="color: var(--text-dim); font-size: 0.88rem; margin-bottom: 18px;">
+        Help us maintain a safe community. Please describe why you're reporting this ${targetType.toLowerCase()}.
+      </p>
+      <div class="field">
+        <label class="field-label">Reason</label>
+        <textarea class="field-textarea" id="reportReasonInput" placeholder="Describe the issue..." style="min-height: 100px;"></textarea>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px;">
+        <button class="btn btn-ghost btn-sm" id="reportCancelBtn">Cancel</button>
+        <button class="btn btn-sm" id="reportSubmitBtn" style="background: rgba(239,68,68,0.7); color: #fff;"><i class="fa-solid fa-flag"></i> Submit Report</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Close handlers
+  const closeModal = () => overlay.remove();
+  document.getElementById('reportModalClose').onclick = closeModal;
+  document.getElementById('reportCancelBtn').onclick = closeModal;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
+
+  // Submit handler
+  document.getElementById('reportSubmitBtn').onclick = () => {
+    const reason = document.getElementById('reportReasonInput').value.trim();
+    if (!reason) return toast('Please provide a reason', 'error');
+
+    const uname = LS.get('anon_username') || 'Anonymous';
+    const reports = LS.get('anon_reports') || [];
+    reports.push({
+      id: Date.now(),
+      targetType,
+      targetId: String(targetId),
+      reason,
+      reportedBy: uname,
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    });
+    LS.set('anon_reports', reports);
+    closeModal();
+    toast('Report submitted. Thank you for helping keep the community safe.', 'success');
+  };
+}
+
+// ════════════════════════════════════════
 // INIT
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   const page = document.body.dataset.page;
   initDropdowns();
+
+  // Reset globals to prevent state leaking between navigations
+  isAnon = false;
+  activeFilter = 'all';
+  searchQuery = '';
+  _trustScoreCache = null;
 
   switch (page) {
     case 'auth': initAuth(); break;
@@ -1015,15 +1121,17 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ════════════════════════════════════════
-// PAGE 6: ADMIN
+// PAGE 6: ADMIN (delegates to admin-panel.js)
 // ════════════════════════════════════════
 function initAdmin() {
+  if (typeof initAdminPanel === 'function') return initAdminPanel();
+
+  // Fallback if admin-panel.js not loaded
   const loginSec = $('#adminLoginSection');
   const dashSec = $('#adminDashboardSection');
   const loginForm = $('#adminLoginForm');
   const logoutBtn = $('#adminLogoutBtn');
 
-  // Hardcoded Admin Credentials
   const ADMIN_ID = 'admin';
   const ADMIN_PASS = 'admin123';
 

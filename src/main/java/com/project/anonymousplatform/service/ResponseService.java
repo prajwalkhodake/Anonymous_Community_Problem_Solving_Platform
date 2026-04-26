@@ -4,7 +4,6 @@ import com.project.anonymousplatform.entity.Response;
 import com.project.anonymousplatform.repository.ResponseRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,10 +20,13 @@ public class ResponseService {
         if (response.getContent() == null || response.getContent().trim().isEmpty()) {
             throw new IllegalArgumentException("Response content cannot be empty");
         }
-        response.setCreatedAt(LocalDateTime.now());
-        if (response.getIsHelpful() == null) {
-            response.setIsHelpful(false);
+
+        // Content moderation check
+        if (ContentModerationUtil.containsRestrictedContent(response.getContent())) {
+            throw new IllegalArgumentException("Response contains restricted content");
         }
+
+        // Timestamp and isHelpful default are now handled by @PrePersist in the entity
         return responseRepository.save(response);
     }
 
