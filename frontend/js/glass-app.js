@@ -285,7 +285,7 @@ async function apiCall(endpoint, data) {
       body: JSON.stringify(data)
     });
     const result = await res.json();
-    if (!res.ok) throw new Error(result.error || result.message || 'Action failed');
+    if (!res.ok) throw new Error(result.message || result.error || 'Action failed');
     return result;
   } catch (err) {
     toast(err.message, 'error');
