@@ -1307,7 +1307,7 @@ function initAdmin() {
     if(!confirm('Are you sure you want to delete this user? ALL THEIR POSTS WILL ALSO BE DELETED.')) return;
     
     try {
-      const res = await fetch('http://localhost:8080/api/users/' + userId, { method: 'DELETE' });
+      const res = await fetch('/api/users/' + userId, { method: 'DELETE' });
       if (res.ok) {
         toast('User & their posts deleted via API', 'success');
         renderAdminData();
@@ -1339,7 +1339,7 @@ function initAdmin() {
   window.deleteAdminPost = async (postId) => {
     if(!confirm('Delete this post?')) return;
     try {
-      const res = await fetch('http://localhost:8080/api/problems/' + postId, { method: 'DELETE' });
+      const res = await fetch('/api/problems/' + postId, { method: 'DELETE' });
       if (res.ok) {
         toast('Post deleted via API', 'success');
         renderAdminData();
@@ -1373,9 +1373,9 @@ function initAdmin() {
 
     try {
       if (report.targetType === 'PROBLEM') {
-        await fetch('http://localhost:8080/api/problems/' + report.targetId, { method: 'DELETE' });
+        await fetch('/api/problems/' + report.targetId, { method: 'DELETE' });
       } else if (report.targetType === 'USER') {
-        await fetch('http://localhost:8080/api/users/' + report.targetId, { method: 'DELETE' });
+        await fetch('/api/users/' + report.targetId, { method: 'DELETE' });
       }
     } catch(e) {}
 

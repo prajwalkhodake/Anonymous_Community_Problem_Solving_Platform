@@ -113,7 +113,7 @@ function pickAv(name) {
 // AUTH GUARDS
 // ════════════════════════════════════════
 function guardAuth() {
-  if (!LS.get('anon_user')) { window.location.href = 'index.html'; return null; }
+  if (!LS.get('anon_user')) { window.location.href = 'auth.html'; return null; }
   return LS.get('anon_user');
 }
 
@@ -172,7 +172,7 @@ function initDropdowns() {
           LS.del('anon_user');
           LS.del('anon_username');
           toast('Logged out', 'info');
-          setTimeout(() => { window.location.href = 'index.html'; }, 500);
+          setTimeout(() => { window.location.href = 'auth.html'; }, 500);
           break;
       }
     });
@@ -1303,36 +1303,54 @@ function initAdmin() {
   }
 
   // Global Delete Functions for inline onclick
-  window.deleteAdminUser = (userId) => {
+  window.deleteAdminUser = async (userId) => {
     if(!confirm('Are you sure you want to delete this user? ALL THEIR POSTS WILL ALSO BE DELETED.')) return;
     
+    try {
+      const res = await fetch('/api/users/' + userId, { method: 'DELETE' });
+      if (res.ok) {
+        toast('User & their posts deleted via API', 'success');
+        renderAdminData();
+        return;
+      }
+    } catch(e) {}
+
     let users = LS.get('anon_users') || [];
-    const userToDel = users.find(u => u.id === userId);
+    const userToDel = users.find(u => String(u.id) === String(userId));
     
     if (userToDel) {
-      users = users.filter(u => u.id !== userId);
+      users = users.filter(u => String(u.id) !== String(userId));
       LS.set('anon_users', users);
 
       let problems = LS.get('anon_problems') || [];
-      problems = problems.filter(p => !((p.authorId && p.authorId === userId) || (p.authorName && p.authorName === userToDel.username)));
+      problems = problems.filter(p => !((p.authorId && String(p.authorId) === String(userId)) || (p.authorName && p.authorName === userToDel.username)));
       
       // Also remove their responses from other posts
       problems.forEach(p => {
-        if(p.responses) p.responses = p.responses.filter(r => !((r.authorId && r.authorId === userId) || (r.authorName && r.authorName === userToDel.username)));
+        if(p.responses) p.responses = p.responses.filter(r => !((r.authorId && String(r.authorId) === String(userId)) || (r.authorName && r.authorName === userToDel.username)));
       });
 
       LS.set('anon_problems', problems);
-      toast('User & their posts deleted', 'success');
+      toast('User & their posts deleted locally', 'success');
       renderAdminData();
     }
   };
 
-  window.deleteAdminPost = (postId) => {
+  window.deleteAdminPost = async (postId) => {
     if(!confirm('Delete this post?')) return;
+    try {
+      const res = await fetch('/api/problems/' + postId, { method: 'DELETE' });
+      if (res.ok) {
+        toast('Post deleted via API', 'success');
+        renderAdminData();
+        return;
+      }
+    } catch(e) {}
+
     let problems = LS.get('anon_problems') || [];
-    problems = problems.filter(p => p.id !== postId);
+    problems = problems.filter(p => String(p.id) !== String(postId));
     LS.set('anon_problems', problems);
-    toast('Post deleted', 'success');
+    toast('Post deleted locally', 'success');
     renderAdminData();
   };
 
@@ -1346,12 +1364,20 @@ function initAdmin() {
     renderAdminData();
   };
 
-  window.deleteReportTarget = (reportId) => {
+  window.deleteReportTarget = async (reportId) => {
     let reports = LS.get('anon_reports') || [];
     const report = reports.find(r => r.id === reportId);
     if (!report) return;
 
     if (!confirm(`Are you sure you want to delete this ${report.targetType}?`)) return;
+
+    try {
+      if (report.targetType === 'PROBLEM') {
+        await fetch('/api/problems/' + report.targetId, { method: 'DELETE' });
+      } else if (report.targetType === 'USER') {
+        await fetch('/api/users/' + report.targetId, { method: 'DELETE' });
+      }
+    } catch(e) {}
 
     if (report.targetType === 'PROBLEM') {
       let problems = LS.get('anon_problems') || [];
@@ -1520,7 +1546,7 @@ function initProfile() {
         LS.del('anon_user');
         LS.del('anon_username');
         toast('Logged out', 'info');
-        setTimeout(() => window.location.href = 'index.html', 500);
+        setTimeout(() => window.location.href = 'auth.html', 500);
       });
     }
   }

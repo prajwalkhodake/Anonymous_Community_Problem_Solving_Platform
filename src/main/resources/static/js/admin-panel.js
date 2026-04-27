@@ -5,6 +5,26 @@
 let adminPostFilter = 'all';
 let adminReportFilter = 'all';
 
+let adminData = { users: [], problems: [], reports: [] };
+
+async function fetchAdminData() {
+  try {
+    const [uRes, pRes] = await Promise.all([
+      fetch('/api/users').catch(() => ({ok: false})),
+      fetch('/api/problems').catch(() => ({ok: false}))
+    ]);
+    if (uRes.ok) adminData.users = await uRes.json();
+    else adminData.users = LS.get('anon_users') || [];
+    
+    if (pRes.ok) adminData.problems = await pRes.json();
+    else adminData.problems = LS.get('anon_problems') || [];
+  } catch(e) {
+    adminData.users = LS.get('anon_users') || [];
+    adminData.problems = LS.get('anon_problems') || [];
+  }
+  adminData.reports = LS.get('anon_reports') || [];
+}
+
 function initAdminPanel() {
   const loginSec = document.querySelector('#adminLoginSection');
   const dashSec = document.querySelector('#adminDashboardSection');
@@ -91,12 +111,19 @@ function initAdminPanel() {
     LS.set('admin_log', log);
   }
 
-  function renderAll() { renderStats(); renderUsers(); renderPosts(); renderReports(); renderActivityLog(); }
+  async function renderAll() { 
+    await fetchAdminData();
+    renderStats(); 
+    renderUsers(); 
+    renderPosts(); 
+    renderReports(); 
+    renderActivityLog(); 
+  }
 
   function renderStats() {
-    const users = LS.get('anon_users') || [];
-    const problems = LS.get('anon_problems') || [];
-    const reports = LS.get('anon_reports') || [];
+    const users = adminData.users;
+    const problems = adminData.problems;
+    const reports = adminData.reports;
     let totalResp = 0;
     problems.forEach(p => totalResp += (p.responses ? p.responses.length : 0));
     const pendingReports = reports.filter(r => r.status === 'PENDING').length;
@@ -114,8 +141,8 @@ function initAdminPanel() {
   function renderUsers() {
     const tbody = document.querySelector('#adminUsersTbody');
     if (!tbody) return;
-    let users = LS.get('anon_users') || [];
-    const problems = LS.get('anon_problems') || [];
+    let users = adminData.users;
+    const problems = adminData.problems;
     const q = (document.querySelector('#searchUsers')?.value || '').toLowerCase();
     if (q) users = users.filter(u => (u.username || '').toLowerCase().includes(q) || (u.email || '').toLowerCase().includes(q));
 
@@ -139,10 +166,10 @@ function initAdminPanel() {
   }
 
   window._adminViewUser = (userId) => {
-    const users = LS.get('anon_users') || [];
-    const u = users.find(x => x.id === userId);
+    const users = adminData.users;
+    const u = users.find(x => String(x.id) === String(userId));
     if (!u) return;
-    const problems = LS.get('anon_problems') || [];
+    const problems = adminData.problems;
     const userPosts = problems.filter(p => p.authorId === u.id || p.authorName === u.username);
     let respCount = 0;
     problems.forEach(p => (p.responses || []).forEach(r => { if (r.authorName === u.username) respCount++; }));
@@ -167,19 +194,30 @@ function initAdminPanel() {
     `);
   };
 
-  window._adminDeleteUser = (userId) => {
+  window._adminDeleteUser = async (userId) => {
     if (!confirm('Delete this user and ALL their posts & responses?')) return;
+    try {
+      const res = await fetch('/api/users/' + userId, { method: 'DELETE' });
+      if (res.ok) {
+        logAction(`Deleted user ID: ${userId} via API`);
+        toast('User & content deleted', 'success');
+        renderAll();
+        return;
+      }
+    } catch(e) {}
+    
+    // Fallback to localstorage
     let users = LS.get('anon_users') || [];
-    const u = users.find(x => x.id === userId);
+    const u = users.find(x => String(x.id) === String(userId));
     if (!u) return;
-    users = users.filter(x => x.id !== userId);
+    users = users.filter(x => String(x.id) !== String(userId));
     LS.set('anon_users', users);
     let problems = LS.get('anon_problems') || [];
-    problems = problems.filter(p => !(p.authorId === userId || p.authorName === u.username));
+    problems = problems.filter(p => !(String(p.authorId) === String(userId) || p.authorName === u.username));
     problems.forEach(p => { if (p.responses) p.responses = p.responses.filter(r => r.authorName !== u.username); });
     LS.set('anon_problems', problems);
     logAction(`Deleted user "${u.username || u.email}" and their content`);
-    toast('User & content deleted', 'success');
+    toast('User & content deleted locally', 'success');
     renderAll();
   };
 
@@ -187,7 +225,7 @@ function initAdminPanel() {
   function renderPosts() {
     const tbody = document.querySelector('#adminPostsTbody');
     if (!tbody) return;
-    let problems = LS.get('anon_problems') || [];
+    let problems = adminData.problems;
     const q = (document.querySelector('#searchPosts')?.value || '').toLowerCase();
     if (adminPostFilter !== 'all') problems = problems.filter(p => p.tag === adminPostFilter);
     if (q) problems = problems.filter(p => (p.title||'').toLowerCase().includes(q) || (p.authorName||'').toLowerCase().includes(q) || (p.body||'').toLowerCase().includes(q));
@@ -212,7 +250,7 @@ function initAdminPanel() {
   }
 
   window._adminViewPost = (postId) => {
-    const problems = LS.get('anon_problems') || [];
+    const problems = adminData.problems;
     const p = problems.find(x => x.id === postId);
     if (!p) return;
     const resps = (p.responses || []).map((r, i) => `
@@ -235,21 +273,32 @@ function initAdminPanel() {
     `);
   };
 
-  window._adminDeletePost = (postId) => {
+  window._adminDeletePost = async (postId) => {
     if (!confirm('Delete this post?')) return;
+    try {
+      const res = await fetch('/api/problems/' + postId, { method: 'DELETE' });
+      if (res.ok) {
+        logAction(`Deleted post ID: ${postId} via API`);
+        toast('Post deleted', 'success');
+        renderAll();
+        return;
+      }
+    } catch(e) {}
+    
+    // Fallback
     let problems = LS.get('anon_problems') || [];
-    const p = problems.find(x => x.id === postId);
-    problems = problems.filter(x => x.id !== postId);
+    const p = problems.find(x => String(x.id) === String(postId));
+    problems = problems.filter(x => String(x.id) !== String(postId));
     LS.set('anon_problems', problems);
     logAction(`Deleted post "${p ? p.title : postId}"`);
-    toast('Post deleted', 'success');
+    toast('Post deleted locally', 'success');
     renderAll();
   };
 
   window._adminDeleteResponse = (postId, respIdx) => {
     if (!confirm('Delete this response?')) return;
     const problems = LS.get('anon_problems') || [];
-    const p = problems.find(x => x.id === postId);
+    const p = problems.find(x => String(x.id) === String(postId));
     if (p && p.responses && p.responses[respIdx]) {
       const rName = p.responses[respIdx].authorName;
       p.responses.splice(respIdx, 1);
@@ -265,7 +314,7 @@ function initAdminPanel() {
   function renderReports() {
     const tbody = document.querySelector('#adminReportsTbody');
     if (!tbody) return;
-    let reports = LS.get('anon_reports') || [];
+    let reports = adminData.reports;
     const q = (document.querySelector('#searchReports')?.value || '').toLowerCase();
     if (adminReportFilter !== 'all') reports = reports.filter(r => r.status === adminReportFilter);
     if (q) reports = reports.filter(r => (r.reason||'').toLowerCase().includes(q) || (r.reportedBy||'').toLowerCase().includes(q) || (r.targetType||'').toLowerCase().includes(q));
@@ -276,7 +325,7 @@ function initAdminPanel() {
       const isPending = r.status === 'PENDING';
       const typeBadge = r.targetType === 'PROBLEM' ? 'badge-problem' : r.targetType === 'USER' ? 'badge-user' : 'badge-response';
       const statusBadge = isPending ? 'badge-pending' : 'badge-resolved';
-      const targetLabel = r.targetType === 'PROBLEM' ? (function(){ const pr = (LS.get('anon_problems')||[]).find(p=>String(p.id)===String(r.targetId)); return pr ? pr.title.substring(0,25)+'...' : '#'+r.targetId; })() : r.targetId;
+      const targetLabel = r.targetType === 'PROBLEM' ? (function(){ const pr = adminData.problems.find(p=>String(p.id)===String(r.targetId)); return pr ? pr.title.substring(0,25)+'...' : '#'+r.targetId; })() : r.targetId;
       return `<tr>
         <td><span class="badge ${typeBadge}">${r.targetType}</span></td>
         <td style="font-size:.85rem;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${targetLabel}</td>
@@ -293,16 +342,16 @@ function initAdminPanel() {
   }
 
   window._adminViewReport = (reportId) => {
-    const reports = LS.get('anon_reports') || [];
-    const r = reports.find(x => x.id === reportId);
+    const reports = adminData.reports;
+    const r = reports.find(x => String(x.id) === String(reportId));
     if (!r) return;
     const isPending = r.status === 'PENDING';
     let targetInfo = '';
     if (r.targetType === 'PROBLEM') {
-      const p = (LS.get('anon_problems')||[]).find(x => String(x.id) === String(r.targetId));
+      const p = adminData.problems.find(x => String(x.id) === String(r.targetId));
       targetInfo = p ? `<div class="resp-card"><div class="resp-card-header"><span class="resp-card-name">${p.authorName}</span><span class="badge badge-problem">${p.tag||'general'}</span></div><div style="font-weight:600;margin-bottom:4px">${p.title}</div><div class="resp-card-text">${(p.body||'').substring(0,200)}</div></div>` : '<p style="color:var(--text-muted)">Post not found (may have been deleted)</p>';
     } else if (r.targetType === 'USER') {
-      const u = (LS.get('anon_users')||[]).find(x => String(x.username) === String(r.targetId));
+      const u = adminData.users.find(x => String(x.username) === String(r.targetId));
       targetInfo = u ? `<div class="resp-card"><div class="resp-card-name">${u.username} — ${u.email}</div></div>` : '<p style="color:var(--text-muted)">User not found</p>';
     }
 

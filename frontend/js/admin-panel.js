@@ -10,8 +10,8 @@ let adminData = { users: [], problems: [], reports: [] };
 async function fetchAdminData() {
   try {
     const [uRes, pRes] = await Promise.all([
-      fetch('http://localhost:8080/api/users').catch(() => ({ok: false})),
-      fetch('http://localhost:8080/api/problems').catch(() => ({ok: false}))
+      fetch('/api/users').catch(() => ({ok: false})),
+      fetch('/api/problems').catch(() => ({ok: false}))
     ]);
     if (uRes.ok) adminData.users = await uRes.json();
     else adminData.users = LS.get('anon_users') || [];
@@ -197,7 +197,7 @@ function initAdminPanel() {
   window._adminDeleteUser = async (userId) => {
     if (!confirm('Delete this user and ALL their posts & responses?')) return;
     try {
-      const res = await fetch('http://localhost:8080/api/users/' + userId, { method: 'DELETE' });
+      const res = await fetch('/api/users/' + userId, { method: 'DELETE' });
       if (res.ok) {
         logAction(`Deleted user ID: ${userId} via API`);
         toast('User & content deleted', 'success');
@@ -276,7 +276,7 @@ function initAdminPanel() {
   window._adminDeletePost = async (postId) => {
     if (!confirm('Delete this post?')) return;
     try {
-      const res = await fetch('http://localhost:8080/api/problems/' + postId, { method: 'DELETE' });
+      const res = await fetch('/api/problems/' + postId, { method: 'DELETE' });
       if (res.ok) {
         logAction(`Deleted post ID: ${postId} via API`);
         toast('Post deleted', 'success');
