@@ -779,15 +779,15 @@ async function renderFeed() {
         tag: p.category,
         keywords: p.keywords ? p.keywords.split(',') : [],
         authorId: p.author ? p.author.id : null,
-        authorName: p.authorName,
-        isAnonymous: p.isAnonymous,
+        authorName: p.authorName || (p.author && p.author.anonymousName) || 'Anonymous',
+        isAnonymous: p.isAnonymous || false,
         likes: p.likes || 0,
         likedBy: [],
         responses: (p.responses || []).map(r => ({
           id: r.id,
           text: r.content,
           authorId: r.author ? r.author.id : null,
-          authorName: r.authorName,
+          authorName: r.authorName || (r.author && r.author.anonymousName) || 'Anonymous',
           created: r.createdAt
         })),
         created: p.createdAt
