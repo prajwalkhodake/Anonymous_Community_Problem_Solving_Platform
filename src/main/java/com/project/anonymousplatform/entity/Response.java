@@ -22,6 +22,12 @@ public class Response {
     @Column(name = "response_type")
     private String responseType;
 
+    @Column(name = "author_name")
+    private String authorName;
+
+    @Column(name = "is_anonymous")
+    private Boolean isAnonymous = false;
+
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
@@ -58,6 +64,12 @@ public class Response {
 
     public Boolean getIsHelpful() { return isHelpful; }
     public void setIsHelpful(Boolean isHelpful) { this.isHelpful = isHelpful; }
+
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public Boolean getIsAnonymous() { return isAnonymous; }
+    public void setIsAnonymous(Boolean isAnonymous) { this.isAnonymous = isAnonymous; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

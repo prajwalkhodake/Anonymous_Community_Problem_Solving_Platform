@@ -548,8 +548,6 @@ function initCommunity() {
 
   populateDropdown();
 
-  if (!LS.get('anon_problems')) LS.set('anon_problems', seedData());
-
   renderFeed();
   initModalComposer(user, uname);
   initFilters();
@@ -640,39 +638,35 @@ function initModalComposer(user, uname) {
       const anon = tog ? tog.checked : false;
 
       const prob = {
-        id: Date.now(), title, body, tag: selTag,
-        keywords: [...keywordList],
-        authorId: user.id,
+        title, description: body, category: selTag,
+        keywords: keywordList.join(','),
+        author: { id: user.id },
         authorName: anon ? randomName() : uname,
-        isAnonymous: anon,
-        likes: 0, likedBy: [], responses: [],
-        created: new Date().toISOString()
+        isAnonymous: anon
       };
 
-      const all = LS.get('anon_problems') || [];
-      all.unshift(prob);
-      LS.set('anon_problems', all);
-      $('#mTitle').value = '';
-      $('#mBody').value = '';
-      if (kwInput) kwInput.value = '';
-      keywordList = [];
-      renderKeywords();
-      chips.forEach(x => x.classList.remove('active'));
-      selTag = 'general';
-
-      // Close modal
-      const overlay = $('#composerModal');
-      if (overlay) overlay.classList.remove('show');
-      
-      // Also reset tag to 'general' for next use
-      chips.forEach(x => {
-        if(x.dataset.tag === 'general') x.classList.add('active');
-        else x.classList.remove('active');
+      pb.disabled = true;
+      fetch('/api/problems', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prob)
+      }).then(r => r.json()).then(() => {
+        $('#mTitle').value = '';
+        $('#mBody').value = '';
+        if (kwInput) kwInput.value = '';
+        keywordList = [];
+        renderKeywords();
+        chips.forEach(x => x.classList.remove('active'));
+        if (tog) tog.checked = false;
+        isAnon = false;
+        closeModal();
+        renderFeed();
+        pb.disabled = false;
+        toast('Posted to cloud successfully', 'success');
+      }).catch(e => {
+        pb.disabled = false;
+        toast('Failed to post', 'error');
       });
-      selTag = 'general';
-
-      toast('Posted anonymously <i class="fa-solid fa-user-secret"></i>', 'success');
-      renderFeed();
     };
   }
 }
@@ -766,14 +760,44 @@ function initSearch() {
   }
 }
 
-function renderFeed() {
+async function renderFeed() {
   const feed = $('#feed');
   if (!feed) return;
 
   // Rebuild trust score cache at the start of each render
   _trustScoreCache = buildTrustScoreCache();
 
-  let problems = LS.get('anon_problems') || [];
+  let problems = [];
+  try {
+    const res = await fetch('/api/problems');
+    if (res.ok) {
+      const data = await res.json();
+      problems = data.map(p => ({
+        id: p.id,
+        title: p.title,
+        body: p.description,
+        tag: p.category,
+        keywords: p.keywords ? p.keywords.split(',') : [],
+        authorId: p.author ? p.author.id : null,
+        authorName: p.authorName,
+        isAnonymous: p.isAnonymous,
+        likes: p.likes || 0,
+        likedBy: [],
+        responses: (p.responses || []).map(r => ({
+          id: r.id,
+          text: r.content,
+          authorId: r.author ? r.author.id : null,
+          authorName: r.authorName,
+          created: r.createdAt
+        })),
+        created: p.createdAt
+      }));
+      // sort latest first
+      problems.sort((a,b) => new Date(b.created) - new Date(a.created));
+    }
+  } catch(e) {
+    console.error(e);
+  }
 
   // Counts
   const counts = { all: problems.length, urgent: 0, help: 0, discussion: 0, advice: 0, general: 0 };
@@ -907,18 +931,14 @@ function buildPost(p) {
 
 function bindPostEvents() {
   $$('.like-btn').forEach(b => {
-    b.onclick = () => {
+    b.onclick = async () => {
       const id = +b.dataset.id;
-      const user = LS.get('anon_user');
-      const all = LS.get('anon_problems') || [];
-      const p = all.find(x => x.id === id);
-      if (!p) return;
-      if (!p.likedBy) p.likedBy = [];
-      const idx = p.likedBy.indexOf(user.id);
-      if (idx > -1) { p.likedBy.splice(idx, 1); p.likes = Math.max(0, (p.likes||0)-1); }
-      else { p.likedBy.push(user.id); p.likes = (p.likes||0)+1; }
-      LS.set('anon_problems', all);
-      renderFeed();
+      b.disabled = true;
+      try {
+        await fetch(`/api/problems/${id}/like`, { method: 'PUT' });
+        await renderFeed();
+      } catch(e) {}
+      b.disabled = false;
     };
   });
 
@@ -988,7 +1008,7 @@ function bindPostEvents() {
   });
 
   $$('.send-resp').forEach(b => {
-    b.onclick = () => {
+    b.onclick = async () => {
       const id = +b.dataset.id;
       const input = $(`#ri-${id}`);
       const text = input?.value.trim();
@@ -999,14 +1019,25 @@ function bindPostEvents() {
       }
 
       const uname = LS.get('anon_username');
-      const all = LS.get('anon_problems') || [];
-      const p = all.find(x => x.id === id);
-      if (!p) return;
-      if (!p.responses) p.responses = [];
-      p.responses.push({ id: Date.now(), text, authorName: isAnon ? randomName() : uname, created: new Date().toISOString() });
-      LS.set('anon_problems', all);
-      toast('Reply sent <i class="fa-solid fa-comment"></i>', 'success');
-      renderFeed();
+      b.disabled = true;
+      try {
+        await fetch('/api/responses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            problem: { id },
+            content: text,
+            authorName: isAnon ? randomName() : uname,
+            isAnonymous: isAnon
+          })
+        });
+        toast('Reply sent <i class="fa-solid fa-comment"></i>', 'success');
+        input.value = '';
+        await renderFeed();
+      } catch(e) {
+        toast('Failed to send reply', 'error');
+      }
+      b.disabled = false;
     };
   });
 
@@ -1125,24 +1156,32 @@ function openReportModal(targetId, targetType) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) closeModal(); });
 
   // Submit handler
-  document.getElementById('reportSubmitBtn').onclick = () => {
+  document.getElementById('reportSubmitBtn').onclick = async () => {
     const reason = document.getElementById('reportReasonInput').value.trim();
     if (!reason) return toast('Please provide a reason', 'error');
 
     const uname = LS.get('anon_username') || 'Anonymous';
-    const reports = LS.get('anon_reports') || [];
-    reports.push({
-      id: Date.now(),
-      targetType,
-      targetId: String(targetId),
-      reason,
-      reportedBy: uname,
-      status: 'PENDING',
-      createdAt: new Date().toISOString()
-    });
-    LS.set('anon_reports', reports);
-    closeModal();
-    toast('Report submitted. Thank you for helping keep the community safe.', 'success');
+    const btn = document.getElementById('reportSubmitBtn');
+    btn.disabled = true;
+
+    try {
+      await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          targetType,
+          targetId: String(targetId),
+          reason,
+          reportedBy: uname,
+          status: 'PENDING'
+        })
+      });
+      closeModal();
+      toast('Report submitted. Thank you for helping keep the community safe.', 'success');
+    } catch(e) {
+      toast('Failed to submit report', 'error');
+    }
+    btn.disabled = false;
   };
 }
 

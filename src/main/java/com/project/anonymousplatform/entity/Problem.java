@@ -31,6 +31,18 @@ public class Problem {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "author_name")
+    private String authorName;
+
+    @Column(name = "likes")
+    private Integer likes = 0;
+
+    @Column(name = "keywords", columnDefinition = "TEXT")
+    private String keywords;
+
+    @Column(name = "is_anonymous")
+    private Boolean isAnonymous = false;
+
     @ManyToOne
     @JoinColumn(name = "author_id")
     private User author;
@@ -77,6 +89,18 @@ public class Problem {
 
     public User getAuthor() { return author; }
     public void setAuthor(User author) { this.author = author; }
+
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+
+    public Integer getLikes() { return likes; }
+    public void setLikes(Integer likes) { this.likes = likes; }
+
+    public String getKeywords() { return keywords; }
+    public void setKeywords(String keywords) { this.keywords = keywords; }
+
+    public Boolean getIsAnonymous() { return isAnonymous; }
+    public void setIsAnonymous(Boolean isAnonymous) { this.isAnonymous = isAnonymous; }
 
     public List<Response> getResponses() { return responses; }
     public void setResponses(List<Response> responses) { this.responses = responses; }

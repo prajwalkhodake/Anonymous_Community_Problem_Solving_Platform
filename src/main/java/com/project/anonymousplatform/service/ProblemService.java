@@ -61,4 +61,11 @@ public class ProblemService {
         }
         problemRepository.deleteById(id);
     }
+
+    public Problem likeProblem(Long id) {
+        Problem problem = problemRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Problem not found with id: " + id));
+        problem.setLikes(problem.getLikes() + 1);
+        return problemRepository.save(problem);
+    }
 }

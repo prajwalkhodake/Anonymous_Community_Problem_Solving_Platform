@@ -9,14 +9,47 @@ let adminData = { users: [], problems: [], reports: [] };
 
 async function fetchAdminData() {
   try {
-    const uRes = await fetch('/api/users').catch(() => ({ok: false}));
+    const [uRes, pRes, rRes] = await Promise.all([
+      fetch('/api/users').catch(() => ({ok: false})),
+      fetch('/api/problems').catch(() => ({ok: false})),
+      fetch('/api/reports').catch(() => ({ok: false}))
+    ]);
+
     if (uRes.ok) adminData.users = await uRes.json();
     else adminData.users = LS.get('anon_users') || [];
+    
+    if (pRes.ok) {
+      const data = await pRes.json();
+      adminData.problems = data.map(p => ({
+        id: p.id,
+        title: p.title,
+        body: p.description,
+        tag: p.category,
+        keywords: p.keywords ? p.keywords.split(',') : [],
+        authorId: p.author ? p.author.id : null,
+        authorName: p.authorName,
+        isAnonymous: p.isAnonymous,
+        likes: p.likes || 0,
+        likedBy: [],
+        responses: (p.responses || []).map(r => ({
+          id: r.id,
+          text: r.content,
+          authorId: r.author ? r.author.id : null,
+          authorName: r.authorName,
+          created: r.createdAt
+        })),
+        created: p.createdAt
+      }));
+    } else adminData.problems = LS.get('anon_problems') || [];
+
+    if (rRes.ok) adminData.reports = await rRes.json();
+    else adminData.reports = LS.get('anon_reports') || [];
+
   } catch(e) {
     adminData.users = LS.get('anon_users') || [];
+    adminData.problems = LS.get('anon_problems') || [];
+    adminData.reports = LS.get('anon_reports') || [];
   }
-  adminData.problems = LS.get('anon_problems') || [];
-  adminData.reports = LS.get('anon_reports') || [];
 }
 
 function initAdminPanel() {
@@ -251,7 +284,7 @@ function initAdminPanel() {
       <div class="resp-card">
         <div class="resp-card-header"><span class="resp-card-name">${r.authorName}</span><span class="resp-card-time">${r.created ? timeAgo(r.created) : ''}</span></div>
         <div class="resp-card-text">${r.text}</div>
-        <div class="resp-card-actions"><button class="action-btn danger" onclick="window._adminDeleteResponse(${p.id},${i})"><i class="fa-solid fa-trash"></i> Delete Response</button></div>
+        <div class="resp-card-actions"><button class="action-btn danger" onclick="window._adminDeleteResponse(${r.id}, ${p.id})"><i class="fa-solid fa-trash"></i> Delete Response</button></div>
       </div>`).join('');
 
     showModal(`
@@ -278,29 +311,21 @@ function initAdminPanel() {
         return;
       }
     } catch(e) {}
-    
-    // Fallback
-    let problems = LS.get('anon_problems') || [];
-    const p = problems.find(x => String(x.id) === String(postId));
-    problems = problems.filter(x => String(x.id) !== String(postId));
-    LS.set('anon_problems', problems);
-    logAction(`Deleted post "${p ? p.title : postId}"`);
-    toast('Post deleted locally', 'success');
-    renderAll();
+    // No fallback needed as we are migrating off LS
   };
 
-  window._adminDeleteResponse = (postId, respIdx) => {
+  window._adminDeleteResponse = async (respId, postId) => {
     if (!confirm('Delete this response?')) return;
-    const problems = LS.get('anon_problems') || [];
-    const p = problems.find(x => String(x.id) === String(postId));
-    if (p && p.responses && p.responses[respIdx]) {
-      const rName = p.responses[respIdx].authorName;
-      p.responses.splice(respIdx, 1);
-      LS.set('anon_problems', problems);
-      logAction(`Deleted response by "${rName}" on post "${p.title}"`);
-      toast('Response deleted', 'success');
-      window._adminViewPost(postId);
-      renderAll();
+    try {
+      const res = await fetch('/api/responses/' + respId, { method: 'DELETE' });
+      if (res.ok) {
+        logAction(`Deleted response ID: ${respId} via API`);
+        toast('Response deleted', 'success');
+        await fetchAdminData();
+        window._adminViewPost(postId);
+      }
+    } catch(e) {
+      toast('Failed to delete response', 'error');
     }
   };
 
@@ -364,44 +389,43 @@ function initAdminPanel() {
     `);
   };
 
-  window._adminDismissReport = (reportId) => {
-    const reports = LS.get('anon_reports') || [];
-    const r = reports.find(x => x.id === reportId);
-    if (!r) return;
-    r.status = 'RESOLVED';
-    LS.set('anon_reports', reports);
-    logAction(`Dismissed report #${reportId} (${r.targetType})`);
-    toast('Report dismissed', 'info');
-    renderAll();
+  window._adminDismissReport = async (reportId) => {
+    try {
+      const res = await fetch(`/api/reports/${reportId}/dismiss`, { method: 'PUT' });
+      if (res.ok) {
+        logAction(`Dismissed report #${reportId}`);
+        toast('Report dismissed', 'info');
+        await fetchAdminData();
+        renderAll();
+      }
+    } catch(e) {
+      toast('Failed to dismiss report', 'error');
+    }
   };
 
-  window._adminActOnReport = (reportId) => {
-    const reports = LS.get('anon_reports') || [];
-    const r = reports.find(x => x.id === reportId);
+  window._adminActOnReport = async (reportId) => {
+    const r = adminData.reports.find(x => String(x.id) === String(reportId));
     if (!r) return;
     if (!confirm(`Delete the reported ${r.targetType.toLowerCase()} and resolve this report?`)) return;
 
-    if (r.targetType === 'PROBLEM') {
-      let problems = LS.get('anon_problems') || [];
-      problems = problems.filter(p => String(p.id) !== String(r.targetId));
-      LS.set('anon_problems', problems);
-    } else if (r.targetType === 'USER') {
-      let users = LS.get('anon_users') || [];
-      const u = users.find(x => String(x.username) === String(r.targetId));
-      if (u) {
-        users = users.filter(x => x.username !== u.username);
-        LS.set('anon_users', users);
-        let problems = LS.get('anon_problems') || [];
-        problems = problems.filter(p => p.authorName !== u.username);
-        problems.forEach(p => { if (p.responses) p.responses = p.responses.filter(res => res.authorName !== u.username); });
-        LS.set('anon_problems', problems);
+    try {
+      if (r.targetType === 'PROBLEM') {
+        await fetch('/api/problems/' + r.targetId, { method: 'DELETE' });
+      } else if (r.targetType === 'USER') {
+        const u = adminData.users.find(x => String(x.username) === String(r.targetId));
+        if (u) await fetch('/api/users/' + u.id, { method: 'DELETE' });
       }
+      
+      // Dismiss the report to resolve it
+      await fetch(`/api/reports/${reportId}/dismiss`, { method: 'PUT' });
+      
+      logAction(`Acted on report #${reportId}: deleted ${r.targetType.toLowerCase()} "${r.targetId}"`);
+      toast('Target deleted & report resolved', 'success');
+      await fetchAdminData();
+      renderAll();
+    } catch(e) {
+      toast('Failed to act on report', 'error');
     }
-    r.status = 'RESOLVED';
-    LS.set('anon_reports', reports);
-    logAction(`Acted on report #${reportId}: deleted ${r.targetType.toLowerCase()} "${r.targetId}"`);
-    toast('Target deleted & report resolved', 'success');
-    renderAll();
   };
 
   // ── ACTIVITY LOG ──

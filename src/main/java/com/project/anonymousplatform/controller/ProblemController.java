@@ -50,10 +50,15 @@ public class ProblemController {
         return ResponseEntity.ok(problemService.getProblemsByCategory(category));
     }
 
-    // DELETE /api/problems/1
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProblem(@PathVariable Long id) {
         problemService.deleteProblem(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // PUT /api/problems/1/like
+    @PutMapping("/{id}/like")
+    public ResponseEntity<Problem> likeProblem(@PathVariable Long id) {
+        return ResponseEntity.ok(problemService.likeProblem(id));
     }
 }
