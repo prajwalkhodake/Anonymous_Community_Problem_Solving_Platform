@@ -9,19 +9,13 @@ let adminData = { users: [], problems: [], reports: [] };
 
 async function fetchAdminData() {
   try {
-    const [uRes, pRes] = await Promise.all([
-      fetch('/api/users').catch(() => ({ok: false})),
-      fetch('/api/problems').catch(() => ({ok: false}))
-    ]);
+    const uRes = await fetch('/api/users').catch(() => ({ok: false}));
     if (uRes.ok) adminData.users = await uRes.json();
     else adminData.users = LS.get('anon_users') || [];
-    
-    if (pRes.ok) adminData.problems = await pRes.json();
-    else adminData.problems = LS.get('anon_problems') || [];
   } catch(e) {
     adminData.users = LS.get('anon_users') || [];
-    adminData.problems = LS.get('anon_problems') || [];
   }
+  adminData.problems = LS.get('anon_problems') || [];
   adminData.reports = LS.get('anon_reports') || [];
 }
 
